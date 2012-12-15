@@ -7,11 +7,19 @@ class Game implements haxe.Public {
 	var tiles : h2d.Tile;
 	var sprites : Array<Array<h2d.Tile>>;
 	var scroll : { x : Float, y : Float };
+
+	var lightsBitmap : h2d.CachedBitmap;
+	var lights : h2d.Sprite;
+	var scrollBitmap : h2d.CachedBitmap;
+	var scrollContent : h2d.Layers;
+	
 	var hero : Hero;
 	var entities : Array<Entity>;
 	var collide : Array<Array<Bool>>;
 	var mapWidth : Int;
 	var mapHeight : Int;
+	var light : h2d.Tile;
+	var lightBulb : h2d.Tile;
 	
 	function new(e) {
 		this.engine = e;
@@ -19,6 +27,7 @@ class Game implements haxe.Public {
 	
 	public function init() {
 		entities = [];
+		light = h2d.Tile.fromBitmap(new LightBMP(0, 0, true));
 		scene = new h2d.Scene();
 		scene.setFixedSize(380, 250);
 		var t = new Tiles(0, 0, true);
@@ -27,6 +36,23 @@ class Game implements haxe.Public {
 		clearTile(s);
 		tiles = h2d.Tile.fromBitmap(t);
 		sprites = h2d.Tile.autoCut(s, 16).tiles;
+		
+		scrollBitmap = new h2d.CachedBitmap(scene, scene.width, scene.height);
+		scrollContent = new h2d.Layers(scrollBitmap);
+		
+		lightsBitmap = new h2d.CachedBitmap(scene, scene.width, scene.height);
+		
+		var halo = new h2d.Bitmap(h2d.Tile.fromBitmap(new HaloBMP(0, 0, true)));
+		lightsBitmap.addChild(halo);
+		lights = new h2d.Sprite(lightsBitmap);
+		lightsBitmap.blendMode = Hide;
+		
+		lightBulb = tiles.sub(48, 96, 16, 16);
+
+		scrollBitmap.colorMatrix = h3d.Matrix.S(0.4, 0.4, 0.5);
+		scrollBitmap.multiplyMap = lightsBitmap.getTile();
+		scrollBitmap.multiplyFactor = 3.0;
+		
 		initMap();
 		scroll = { x : 56.5, y : 41.5 };
 		hero = new Hero(scroll.x, scroll.y);
@@ -71,7 +97,7 @@ class Game implements haxe.Public {
 			case "underShades":
 				t.alpha = 0.3;
 			case "shades":
-				t.alpha = 0.5;
+				t.alpha = 0.3;
 			case "windows":
 				t.alpha = 0.5;
 			case "sprites":
@@ -82,8 +108,16 @@ class Game implements haxe.Public {
 							var s = new h2d.Bitmap(tmap[c - 1]);
 							s.x = x * 16;
 							s.y = y * 16;
-							scene.add(s, Const.PLAN_ENTITY);
+							scrollContent.add(s, Const.PLAN_ENTITY);
 						}
+					}
+				continue;
+			case "lights":
+				for( y in 0...mapHeight )
+					for( x in 0...mapWidth ) {
+						var c = l.data[pos++];
+						if( c != 0 )
+							new Light(x+0.5,y+0.5);
 					}
 				continue;
 			default:
@@ -95,16 +129,21 @@ class Game implements haxe.Public {
 					t.add(x * 16, y * 16, tmap[c - 1]);
 				}
 			}
-			scene.add(t, plan);
+			scrollContent.add(t, plan);
 		}
 	}
 	
 	function update(dt:Float) {
 		engine.render(scene);
+		
+		scroll.x = hero.x;
+		scroll.y = hero.y;
+		
 		var ix = Std.int(scroll.x * 16) - (scene.width >> 1);
 		var iy = Std.int(scroll.y * 16) - (scene.height >> 1);
-		scene.x = -ix;
-		scene.y = -iy;
+		scrollContent.x = lights.x = -ix;
+		scrollContent.y = lights.y = -iy;
+		
 		if( Key.isDown(K.LEFT) || Key.isDown("A".code) || Key.isDown("Q".code) )
 			hero.move( -1, 0);
 		if( Key.isDown(K.RIGHT) || Key.isDown("D".code) )
@@ -113,7 +152,7 @@ class Game implements haxe.Public {
 			hero.move( 0, 1);
 		if( Key.isDown(K.UP) || Key.isDown("Z".code) || Key.isDown("W".code) )
 			hero.move( 0, -1);
-		scene.ysort(Const.PLAN_ENTITY);
+		scrollContent.ysort(Const.PLAN_ENTITY);
 		for( e in entities.copy() )
 			e.update(dt);
 	}

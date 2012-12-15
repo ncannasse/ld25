@@ -9,6 +9,14 @@ class Tiles extends flash.display.BitmapData {
 class Sprites extends flash.display.BitmapData {
 }
 
+@:bitmap("gfx/radial.png")
+class LightBMP extends flash.display.BitmapData {
+}
+
+@:bitmap("gfx/halo.png")
+class HaloBMP extends flash.display.BitmapData {
+}
+
 typedef Layer = {
 	data : Array<Int>,
 	name : String,
