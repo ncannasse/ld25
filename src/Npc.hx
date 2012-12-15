@@ -125,8 +125,14 @@ class Npc extends Entity {
 		return true;
 	}
 	
-	override function update(dt) {
-		super.update(dt);
+	override function update(dt:Float) {
+		
+		if( game.missionScan == null || !game.missionScan(this) )
+			setCursor(0x80FFFFFF);
+		else
+			setCursor(0xFFFF0000);
+		
+		
 		if( wait > 0 )
 			wait -= Timer.deltaT;
 		else if( target != null ) {
@@ -160,6 +166,8 @@ class Npc extends Entity {
 				}
 			}
 		}
+		
+		super.update(dt);
 	}
 	
 }

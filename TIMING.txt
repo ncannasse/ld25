@@ -9,3 +9,5 @@
 19:40-20:00 : more lighting (boring)
 20:00-20:30 : break + removed lights
 20:30-21:30 : start gameplay, menu system
+21:30-22:30 : missions begin, minimap
+22:30-23:00 : title screen

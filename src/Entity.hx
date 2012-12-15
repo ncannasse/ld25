@@ -5,7 +5,7 @@ class Entity {
 	var mc : h2d.Bitmap;
 	var shade : h2d.Bitmap;
 	var frame : Float;
-	var anim : Array<h2d.Tile>;
+	public var anim : Array<h2d.Tile>;
 	var animSpeed : Float;
 	var speed : Float;
 	var time : Float = 0.;
@@ -16,6 +16,8 @@ class Entity {
 	var bounds : h2d.Bitmap;
 	public var dirX : Int;
 	public var dirY : Int;
+	
+	var cursor : h2d.Bitmap;
 	
 	public function new(x:Float,y:Float) {
 		this.game = Game.inst;
@@ -83,6 +85,17 @@ class Entity {
 		return ok;
 	}
 	
+	static var WHITE;
+	
+	function setCursor( color : Int ) {
+		if( cursor == null ) {
+			if( WHITE == null ) WHITE = h2d.Tile.fromColor(0xFFFFFFFF);
+			cursor = new h2d.Bitmap(WHITE, game.miniMap);
+			cursor.alpha = 0.5;
+		}
+		cursor.color = h3d.Color.ofInt(color, (color >>> 24) / 255).toVector();
+	}
+	
 	public function update(dt:Float) {
 		if( anim != null ) {
 			frame += dt * animSpeed;
@@ -107,6 +120,10 @@ class Entity {
 		if( shade != null ) {
 			shade.x = mc.x - 1;
 			shade.y = mc.y + 1;
+		}
+		if( cursor != null ) {
+			cursor.x = Std.int(x);
+			cursor.y = Std.int(y);
 		}
 	}
 	
