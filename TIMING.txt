@@ -6,3 +6,6 @@
 14:30-15:30 : more sprites (10 npcs)
 15:30-17:30 : lights effect
 17:30-19:40 : npc moving & bounds checks
+19:40-20:00 : more lighting (boring)
+20:00-20:30 : break + removed lights
+20:30-21:30 : start gameplay, menu system

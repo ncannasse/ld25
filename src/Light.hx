@@ -1,5 +1,5 @@
 class Light extends Entity {
-	
+	/*
 	var wait : Float = 0;
 	var light : h2d.Bitmap;
 	
@@ -35,5 +35,5 @@ class Light extends Entity {
 		var v = 0.5 + light.alpha * 0.6;
 		mc.color.set(v, v, v);
 	}
-	
+		*/
 }

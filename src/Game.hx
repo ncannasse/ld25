@@ -5,13 +5,14 @@ class Game implements haxe.Public {
 	var engine : h3d.Engine;
 	var scene : h2d.Scene;
 	var tiles : h2d.Tile;
+	var uiTile : h2d.Tile;
+	var cursor : h2d.Tile;
 	var sprites : Array<Array<h2d.Tile>>;
 	var scroll : { x : Float, y : Float };
 
-	var lightsBitmap : h2d.CachedBitmap;
-	var lights : h2d.Sprite;
 	var scrollBitmap : h2d.CachedBitmap;
 	var scrollContent : h2d.Layers;
+	var font : h2d.Font;
 	
 	var hero : Hero;
 	var entities : Array<Entity>;
@@ -20,9 +21,9 @@ class Game implements haxe.Public {
 	
 	var mapWidth : Int;
 	var mapHeight : Int;
-	var light : h2d.Tile;
-	var lightBulb : h2d.Tile;
 	var showBounds : Bool;
+	
+	var menu : SelectMenu;
 	
 	function new(e) {
 		this.engine = e;
@@ -30,14 +31,17 @@ class Game implements haxe.Public {
 	
 	public function init() {
 		entities = [];
-		light = h2d.Tile.fromBitmap(new LightBMP(0, 0, true));
 		scene = new h2d.Scene();
 		scene.setFixedSize(380, 250);
 		var t = new Tiles(0, 0, true);
 		var s = new Sprites(0, 0, true);
 		clearTile(t);
 		clearTile(s);
+		
+		font = new h2d.Font("PixelFont", 16);
+		uiTile = h2d.Tile.fromBitmap(new UIBMP(0, 0, true));
 		tiles = h2d.Tile.fromBitmap(t);
+		cursor = tiles.sub(32, 144, 16, 16);
 		sprites = h2d.Tile.autoCut(s, 16).tiles;
 		for( sx in sprites )
 			for( i in 0...sx.length ) {
@@ -49,19 +53,8 @@ class Game implements haxe.Public {
 		
 		scrollBitmap = new h2d.CachedBitmap(scene, scene.width, scene.height);
 		scrollContent = new h2d.Layers(scrollBitmap);
+		scrollBitmap.color = new h3d.Vector(0.8, 0.8, 1.2);
 		
-		lightsBitmap = new h2d.CachedBitmap(scene, scene.width, scene.height);
-		
-		var halo = new h2d.Bitmap(h2d.Tile.fromBitmap(new HaloBMP(0, 0, true)));
-		lightsBitmap.addChild(halo);
-		lights = new h2d.Sprite(lightsBitmap);
-		lightsBitmap.blendMode = Hide;
-		
-		lightBulb = tiles.sub(48, 96, 16, 16, 0, -16);
-
-		scrollBitmap.colorMatrix = h3d.Matrix.S(0.4, 0.4, 0.5);
-		scrollBitmap.multiplyMap = lightsBitmap.getTile();
-		scrollBitmap.multiplyFactor = 3.0;
 		
 		initMap();
 		scroll = { x : 15, y : 27 };
@@ -148,12 +141,14 @@ class Game implements haxe.Public {
 					}
 				continue;
 			case "lights":
+				/*
 				for( y in 0...mapHeight )
 					for( x in 0...mapWidth ) {
 						var c = l.data[pos++];
 						if( c != 0 )
 							new Light(x+0.5,y+0.5);
 					}
+				*/
 				continue;
 			default:
 			}
@@ -168,17 +163,11 @@ class Game implements haxe.Public {
 		}
 	}
 	
-	function update(dt:Float) {
-		engine.render(scene);
-		
-		scroll.x = hero.x;
-		scroll.y = hero.y;
-		
-		var ix = Std.int(scroll.x * 16) - (scene.width >> 1);
-		var iy = Std.int(scroll.y * 16) - (scene.height >> 1);
-		scrollContent.x = lights.x = -ix;
-		scrollContent.y = lights.y = -iy;
-		
+	function doLook(n:Npc) {
+	//	var p = new h2d.ScaleGrid(h2d
+	}
+	
+	function updateGamePlay(dt) {
 		if( Key.isDown(K.LEFT) || Key.isDown("A".code) || Key.isDown("Q".code) )
 			hero.move( -1, 0);
 		if( Key.isDown(K.RIGHT) || Key.isDown("D".code) )
@@ -191,8 +180,66 @@ class Game implements haxe.Public {
 		for( e in entities.copy() )
 			e.update(dt);
 			
+		if( Key.isToggled(K.SPACE) || Key.isToggled(K.ENTER) ) {
+			var px = hero.x + hero.dirX * 0.5;
+			var py = hero.y + hero.dirY * 0.5;
+			for( e in entities ) {
+				var n = flash.Lib.as(e, Npc);
+				if( n != null && n.hitBox(px, py) ) {
+					menu = new SelectMenu([
+						{ t : "Look", c : callback(doLook, n) },
+						{ t : "Cancel", c : function() {} },
+					]);
+					break;
+				}
+			}
+		}
+	}
+	
+	function update(dt:Float) {
+		
+		
+		scroll.x = hero.x;
+		scroll.y = hero.y;
+		
+		var ix = Std.int(scroll.x * 16) - (scene.width >> 1);
+		var iy = Std.int(scroll.y * 16) - (scene.height >> 1);
+		if( ix < 0 ) ix = 0;
+		if( iy < 0 ) iy = 0;
+		if( ix + scene.width > mapWidth * 16 ) ix = mapWidth * 16 - scene.width;
+		if( iy + scene.height > mapHeight * 16 ) iy = mapHeight * 16 - scene.height;
+		scrollContent.x = -ix;
+		scrollContent.y = -iy;
+
+		if( menu != null ) {
+
+			if( Key.isToggled(K.DOWN) || Key.isToggled("S".code) ) {
+				menu.index++;
+				menu.index %= menu.options.length;
+			}
+			
+			if( Key.isToggled(K.UP) || Key.isToggled("Z".code) || Key.isToggled("W".code) ) {
+				menu.index--;
+				if( menu.index < 0 ) menu.index += menu.options.length;
+			}
+			
+			if( Key.isToggled(K.SPACE) || Key.isToggled(K.ENTER) ) {
+				var old = menu;
+				menu.remove();
+				menu = null;
+				old.options[old.index].c();
+				return;
+			}
+			
+			menu.update(dt);
+				
+		} else
+			updateGamePlay(dt);
+			
 		if( Key.isToggled("B".code) )
 			showBounds = !showBounds;
+			
+		engine.render(scene);
 	}
 
 	public static var inst : Game;

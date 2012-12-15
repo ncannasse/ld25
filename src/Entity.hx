@@ -14,6 +14,8 @@ class Entity {
 	var boundsW : Float;
 	var boundsH : Float;
 	var bounds : h2d.Bitmap;
+	public var dirX : Int;
+	public var dirY : Int;
 	
 	public function new(x:Float,y:Float) {
 		this.game = Game.inst;
@@ -27,6 +29,8 @@ class Entity {
 		
 		animSpeed = 0.15;
 		speed = 0.12;
+		dirX = 0;
+		dirY = 1;
 
 		if( c != Light ) {
 			var stile = game.tiles.sub(0, 8 * 16, 16, 16);
@@ -60,7 +64,7 @@ class Entity {
 		return false;
 	}
 	
-	function hitBox( px : Float, py : Float ) {
+	public function hitBox( px : Float, py : Float ) {
 		return px > x - boundsW && py > y - boundsH && px < x + boundsW && py < y + boundsH;
 	}
 	
@@ -72,6 +76,8 @@ class Entity {
 		var mx = dx * speed * Timer.tmod;
 		var my = dy * speed * Timer.tmod;
 		var ok = false;
+		dirX = dx > 0 ? 1 : dx < 0 ? -1 : 0;
+		dirY = dy > 0 ? 1 : dy < 0 ? -1 : 0;
 		if( mx != 0 && !collideBox(x + mx, y) ) { x += mx; ok = true; }
 		if( my != 0 && !collideBox(x, y + my) ) { y += my; ok = true; }
 		return ok;
