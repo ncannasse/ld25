@@ -15,7 +15,7 @@
  </layer>
  <layer name="soil Details" width="100" height="100">
   <data encoding="base64" compression="zlib">
-   eJzt2FEKgkAQAFAtwS4SnqTu0d2ii/Rh96iD5IeByaq7WCT5Hgzq7KwsO3+TZQAAAAAAAAAAAAAAAPAduzZYBv1Ylph+PBL+l1JLvKp9lk0Uefy+lFreHQO5w0j9bWStnnkW9GNp9APGnTvvl5+dYn32nQi5JtYzz9T93hPr4R+cPlwHazI1byp632VgHhLKkWbT3OE2H543vdb7qsgcAAAAAAAAAAAAAAAAAAAAAAAAAADDnjhBD0g=
+   eJzt2NENgjAUBVBQElzEMInu4W7GRfzQPVxEPjAiKZUGjVXPSV6A10vS9P21KAAAAAAAAAAAAAAAAOA9Vl2RB/PIi3l8h6Z71m1V5fT/UrI82gZ6m0j+HFk7zdwL5pEb84C4fe/98LFd/J91r0KOiXnmeXa+l8Q8/ILdi3PAXTX4rgP3IaEeaRbtGS7L8fum2/pQM7EHAAAAAAAAAAAAAAAAAAAAAAAAAMC4K7BSDJw=
   </data>
  </layer>
  <layer name="shades" width="100" height="100" opacity="0.26">
@@ -26,6 +26,16 @@
  <layer name="windows" width="100" height="100" opacity="0.52">
   <data encoding="base64" compression="zlib">
    eJztxrENAAAIA6A+799e0MXNBCYSAAAAAAAAAAAAAAAAAAAA+G3KAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAuFkHbAQs=
+  </data>
+ </layer>
+ <layer name="sprites" width="100" height="100">
+  <data encoding="base64" compression="zlib">
+   eJzt2DENAAAIBLH3rxMhSGAiIaGdT8ElAAAAAAAAAAAAAAAAAFxUSy0AAAAATPwmAAAAAAAAAAAAAAAAAAAAAAAAAAC+ayQvAq0=
+  </data>
+ </layer>
+ <layer name="collide" width="100" height="100" opacity="0.51">
+  <data encoding="base64" compression="zlib">
+   eJzt1jEKwCAQRUEv6/2vkDqLYU0hfGEGrFwbX6FjAAAAAAAAAAAAAAAAAACdeWiWt/mx/s5359ijRxY9suiRRY8semSpd6nHXfTIokcWPbLocU53j6u9+u7XvwAAAAAAAAAAAAAAAAAAAAAAAAAAAHseZT04Bw==
   </data>
  </layer>
 </map>

@@ -1,2 +1,3 @@
 10 am : start
 12 am : city tiles, first screen
+13 am : city load display + hero sprite move + collides ok

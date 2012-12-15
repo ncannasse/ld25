@@ -6,3 +6,4 @@
 -swf-version 11
 -main Game
 -lib h3d
+-resource gfx/map.json@map
