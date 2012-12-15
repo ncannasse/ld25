@@ -16,10 +16,13 @@ class Game implements haxe.Public {
 	var hero : Hero;
 	var entities : Array<Entity>;
 	var collide : Array<Array<Bool>>;
+	var road : Array<Array<Bool>>;
+	
 	var mapWidth : Int;
 	var mapHeight : Int;
 	var light : h2d.Tile;
 	var lightBulb : h2d.Tile;
+	var showBounds : Bool;
 	
 	function new(e) {
 		this.engine = e;
@@ -36,6 +39,13 @@ class Game implements haxe.Public {
 		clearTile(s);
 		tiles = h2d.Tile.fromBitmap(t);
 		sprites = h2d.Tile.autoCut(s, 16).tiles;
+		for( sx in sprites )
+			for( i in 0...sx.length ) {
+				var s = sx[i];
+				s = s.sub(0, 0, s.width, s.height, -s.width, 5-(s.height * 2) );
+				s.scaleToSize(s.width * 2, s.height * 2);
+				sx[i] = s;
+			}
 		
 		scrollBitmap = new h2d.CachedBitmap(scene, scene.width, scene.height);
 		scrollContent = new h2d.Layers(scrollBitmap);
@@ -47,15 +57,24 @@ class Game implements haxe.Public {
 		lights = new h2d.Sprite(lightsBitmap);
 		lightsBitmap.blendMode = Hide;
 		
-		lightBulb = tiles.sub(48, 96, 16, 16);
+		lightBulb = tiles.sub(48, 96, 16, 16, 0, -16);
 
 		scrollBitmap.colorMatrix = h3d.Matrix.S(0.4, 0.4, 0.5);
 		scrollBitmap.multiplyMap = lightsBitmap.getTile();
 		scrollBitmap.multiplyFactor = 3.0;
 		
 		initMap();
-		scroll = { x : 56.5, y : 41.5 };
+		scroll = { x : 15, y : 27 };
 		hero = new Hero(scroll.x, scroll.y);
+		
+		for( i in 0...11 ) {
+			var x, y;
+			do {
+				x = Std.random(mapWidth);
+				y = Std.random(mapHeight);
+			} while( collide[x][y] || road[x][y] );
+			new Npc(i, x + 0.5, y + 0.5);
+		}
 	}
 	
 	function clearTile(t:flash.display.BitmapData) {
@@ -70,13 +89,18 @@ class Game implements haxe.Public {
 	function initMap() {
 		var map : Tiled = haxe.Json.parse(haxe.Resource.getString("map"));
 		var layers = [];
-		var tmap = [];
+		var tmap = [], smap = [];
 		for( y in 0...tiles.height >> 4 )
-			for( x in 0...tiles.width >> 4 )
+			for( x in 0...tiles.width >> 4 ) {
 				tmap.push(tiles.sub(x * 16, y * 16, 16, 16));
+				smap.push(tiles.sub(x * 16, y * 16, 16, 16, 0, -16));
+			}
 		collide	= [];
-		for( x in 0...map.width )
+		road = [];
+		for( x in 0...map.width ) {
 			collide[x] = [];
+			road[x] = [];
+		}
 		mapWidth = map.width;
 		mapHeight = map.height;
 		for( l in map.layers ) {
@@ -94,6 +118,17 @@ class Game implements haxe.Public {
 				continue;
 			case "soil":
 				t.blendMode = None;
+				for( y in 0...mapHeight )
+					for( x in 0...mapWidth ) {
+						var c = l.data[pos++];
+						switch( c-1 ) {
+						case 0, 1, 2, 33, 34:
+							road[x][y] = true;
+						case 7, 36: // walk way
+						default:
+						}
+					}
+				pos = 0;
 			case "underShades":
 				t.alpha = 0.3;
 			case "shades":
@@ -105,9 +140,9 @@ class Game implements haxe.Public {
 					for( x in 0...mapWidth ) {
 						var c = l.data[pos++];
 						if( c != 0 ) {
-							var s = new h2d.Bitmap(tmap[c - 1]);
+							var s = new h2d.Bitmap(smap[c - 1]);
 							s.x = x * 16;
-							s.y = y * 16;
+							s.y = (y + 1) * 16;
 							scrollContent.add(s, Const.PLAN_ENTITY);
 						}
 					}
@@ -155,6 +190,9 @@ class Game implements haxe.Public {
 		scrollContent.ysort(Const.PLAN_ENTITY);
 		for( e in entities.copy() )
 			e.update(dt);
+			
+		if( Key.isToggled("B".code) )
+			showBounds = !showBounds;
 	}
 
 	public static var inst : Game;
