@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="100" height="100" tilewidth="16" tileheight="16">
+ <tileset firstgid="1" name="Tiles" tilewidth="16" tileheight="16">
+  <image source="tiles.png" trans="4a5255" width="512" height="512"/>
+ </tileset>
+ <layer name="soil" width="100" height="100">
+  <data encoding="base64" compression="zlib">
+   eJzt2G1OgzAABmDQ6D2YJ9n0JnqUXU1vYryG/BiB1X7A6DYSnyd5U7aVhPQd60LTAAAAAAAAAAAA3N7hlIc+bZ/H+17Ov6ePbdHHtuhjW/SxLbE+uv5g147jcBzLdB7rpfrogj52wfrHPmOew4yk+ojdB7FRH/Nd2kf4mxXeD2H4a1jfdpLdjCydnwuj8Pt+jzCq0cfLwoTnMortB0v3jznzU+dyLre+H4mk5n8Voo+yXB9viaTmfxaij7JcH6+J6ON6cn28J5Ka/9y/8dOP30181EdZqY9jM/YwHOvjetwf21H6/6qP2+r67E/jdI26SPbBa33UN32GdOnzK33UU+PZkz7qyT1TmptpH09tPvrIK+3nS6OPdWr3MTf6SBvWaOl+vibTvYdzsT5uFX2kXbqfr4k+8tp7XwAAAAAAAAAAAAAAAAAAAAAAAABV/AIP9pmg
+  </data>
+ </layer>
+ <layer name="underShades" width="100" height="100" opacity="0.26">
+  <data encoding="base64" compression="zlib">
+   eJzt2LENADAIAzD+/4pT+kkXOiIWutlSpuSCRAAAAAAAAAAAAAAAAAAAk/y0BQAAAIDOqXR/0+sBAAAAAAAAAAAAAAAAAAAAAAAAANh3AbYaBcg=
+  </data>
+ </layer>
+ <layer name="soil Details" width="100" height="100">
+  <data encoding="base64" compression="zlib">
+   eJzt2FEKgkAQAFAtwS4SnqTu0d2ii/Rh96iD5IeByaq7WCT5Hgzq7KwsO3+TZQAAAAAAAAAAAAAAAPAduzZYBv1Ylph+PBL+l1JLvKp9lk0Uefy+lFreHQO5w0j9bWStnnkW9GNp9APGnTvvl5+dYn32nQi5JtYzz9T93hPr4R+cPlwHazI1byp632VgHhLKkWbT3OE2H543vdb7qsgcAAAAAAAAAAAAAAAAAAAAAAAAAADDnjhBD0g=
+  </data>
+ </layer>
+ <layer name="shades" width="100" height="100" opacity="0.26">
+  <data encoding="base64" compression="zlib">
+   eJzt0bEJgEAQRNFrXTs5S7EUKzkxOzAUd8T3YJONBn5rAAAAAAAAAAAAAAAAAAC59uoBTLbqAUyO6gE/1c9bbv7r20O46JFFjyx6fFuvHsBEjyx6ZNEjix4AAAAAAAAAAAAAAAAAAAAAAAAAAM8ZWW0L/A==
+  </data>
+ </layer>
+ <layer name="windows" width="100" height="100" opacity="0.52">
+  <data encoding="base64" compression="zlib">
+   eJztxrENAAAIA6A+799e0MXNBCYSAAAAAAAAAAAAAAAAAAAA+G3KAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAuFkHbAQs=
+  </data>
+ </layer>
+</map>
