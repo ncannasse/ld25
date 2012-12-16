@@ -210,7 +210,14 @@ class Npc extends Entity {
 		animSpeed *= 3;
 	}
 	
-	override function moveBy(dx, dy) {
+	override function moveBy(dx:Float, dy:Float) {
+		if( id == 10 || id == 6 ) {
+			if( dx < 0 )
+				mc.scaleX = -1;
+			else if( dx > 0 )
+				mc.scaleX = 1;
+		}
+		
 		if( !super.moveBy(dx, dy) ) {
 			target = null;
 			path = null;
@@ -253,7 +260,7 @@ class Npc extends Entity {
 			var dx = t.x - x;
 			var dy = t.y - y;
 			var d = Math.sqrt(dx * dx + dy * dy);
-			if( d > 10 || aggro.time < 0 ) {
+			if( d > 10 || aggro.time < 0 || t.life <= 0 ) {
 				cancelAggro();
 			}
 			else {
@@ -270,12 +277,6 @@ class Npc extends Entity {
 		else if( target != null ) {
 			var ds = speed * dt;
 			var tx = target.x + 0.5, ty = target.y + 0.5;
-			if( id == 10 || id == 6 ) {
-				if( tx < x )
-					mc.scaleX = -1;
-				else if( tx > x )
-					mc.scaleX = 1;
-			}
 			if( tx > x  )
 				moveBy(Math.min(tx - x, ds), 0);
 			else if( tx < x )

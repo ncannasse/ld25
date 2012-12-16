@@ -21,8 +21,8 @@ class Entity {
 	public var life : Float;
 	public var maxLife : Float;
 	
-	var pushX = 0.;
-	var pushY = 0.;
+	public var pushX = 0.;
+	public var pushY = 0.;
 	
 	var lifeBar : h2d.Bitmap;
 	var lifeBarProgress : h2d.Bitmap;
@@ -47,7 +47,7 @@ class Entity {
 		dirX = 0;
 		dirY = 1;
 
-		if( c != Light && c != Car ) {
+		if( c != Car && c != Bill ) {
 			var stile = game.tiles.sub(0, 8 * 16, 16, 16, -16, -22);
 			stile.scaleToSize(32, 32);
 			shade = new h2d.Bitmap(stile);
@@ -69,6 +69,7 @@ class Entity {
 
 	function aggroBy( e : Entity ) {
 		if( e == this ) throw "assert";
+		if( game.mission == 0 ) return false;
 		return e.power * 2 < power;
 	}
 	
@@ -98,17 +99,25 @@ class Entity {
 			RED.scaleToSize(16, 16);
 		}
 		Part.explode(RED, Std.int(x * 16 - 8), Std.int(y * 16 - 16), angle, Std.int(relPower * 10));
+		var isCar = Std.is(this, Npc) && Std.is(e, Car);
 		if( life <= 0 ) {
-			if( !Std.is(e,Car) )
+			if( !isCar )
 				life -= e.power * 0.5;
-			if( life < -maxLife ) {
+			if( life < -maxLife )
 				kill();
-			}
 		} else {
 			life -= e.power;
-			if( life <= 0 )
-				onKill();
+			if( life <= 0 ) {
+				if( isCar )
+					life = 0.01;
+				else
+					onKill();
+			}
 		}
+		showLife();
+	}
+	
+	public function showLife() {
 		showLifeBar = 100;
 	}
 	

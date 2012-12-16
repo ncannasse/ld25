@@ -24,6 +24,8 @@ class Hero extends Entity {
 			life += 0.04 * dt;
 			if( life > maxLife ) life = maxLife;
 		}
+		if( life < 0 )
+			dt *= 0.7;
 		super.update(dt);
 	}
 	
