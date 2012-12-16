@@ -9,6 +9,12 @@ class Hero extends Entity {
 		cursor.alpha = 1;
 	}
 	
+	override function onCollide( e : Entity ) {
+		if( Std.is(e, Bullet) )
+			return false;
+		return true;
+	}
+	
 	override function kill() {
 		life = -maxLife;
 	}

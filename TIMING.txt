@@ -25,12 +25,6 @@ Day 2 : Gameplay
 09:45-11:00 : collide bugs + hit + blood
 11:00-12:30 : fight system ok (aggroo, flee, lifebar)
 12:30-17:30 : save + quest system + play test : first part and tuto done
-
-TODO :
-	attack people, they fight or flee (mini fight system)
-	life bar -> hospital
-	money management
-	weapons
-	missions
-	attack vehicles
+17:30-19:00 : more quests, minigun ok
+19:00-21:00 : lasts quests, title + ending done
 

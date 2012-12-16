@@ -27,6 +27,7 @@ class Game implements haxe.Public {
 	
 	var menu : SelectMenu;
 	var panelMC : h2d.Sprite;
+	var panelTime : Float;
 	
 	var money : Int;
 	var moneyUI : h2d.Text;
@@ -53,9 +54,16 @@ class Game implements haxe.Public {
 	var items : Array<Item>;
 	
 	var saveString : String;
+	
+	var win : Bool;
+	var winPanel : Bool;
+	var winTime : Float = 0;
 			
 	function new(e) {
 		this.engine = e;
+		scene = new h2d.Scene();
+		scene.setFixedSize(380, 250);
+		font = new h2d.Font("PixelFont", 16);
 	}
 	
 	public function init() {
@@ -64,8 +72,6 @@ class Game implements haxe.Public {
 		questsDone = [];
 		items = [];
 		
-		scene = new h2d.Scene();
-		scene.setFixedSize(380, 250);
 		var t = new Tiles(0, 0, true);
 		var s = new Sprites(0, 0, true);
 		var c = new CarsBMP(0, 0, true);
@@ -75,7 +81,6 @@ class Game implements haxe.Public {
 		
 		actions = [];
 		
-		font = new h2d.Font("PixelFont", 16);
 		
 		var ui = new UIBMP(0, 0, true);
 		clearTile(ui, 0xFFFF00FF);
@@ -83,7 +88,6 @@ class Game implements haxe.Public {
 		tiles = h2d.Tile.fromBitmap(t);
 		cursor = tiles.sub(32, 144, 16, 16);
 		sprites = h2d.Tile.autoCut(s, 16).tiles;
-		
 		
 		cars = h2d.Tile.autoCut(c, 16 * 3, 16 * 2).tiles;
 		for( sx in sprites )
@@ -119,7 +123,7 @@ class Game implements haxe.Public {
 		missionText.x = 10;
 		missionText.maxWidth = (scene.width - 20) * 2;
 		missionText.scaleX = missionText.scaleY = 0.5;
-		
+	
 		initMap();
 		scroll = { x : 15, y : 27 };
 		
@@ -157,24 +161,42 @@ class Game implements haxe.Public {
 			mission = save.mission;
 			for( a in save.actions )
 				addAction(a);
-			var npcs = new IntHash();
+			var npcs = new IntHash(), cars = new IntHash();
 			for( e in entities ) {
 				var n = flash.Lib.as(e, Npc);
-				if( n == null ) continue;
+				if( n == null ) {
+					var n = flash.Lib.as(e, Car);
+					if( n != null ) cars.set(n.id, n);
+					continue;
+				}
 				npcs.set(n.id, n);
 			}
 			for( e in save.e ) {
 				var n = npcs.get(e.id);
+				if( n == null )
+					n = addNpc(e.id);
 				n.life = e.life;
 				n.x = e.x;
 				n.y = e.y;
 				n.money = e.m;
 				npcs.remove(e.id);
+				if( n.id == 7 && Lambda.has(questsDone, 0) )
+					n.play(15);
+			}
+			for( e in save.cars ) {
+				var c = cars.get(e.id);
+				c.life = e.life;
+				c.x = e.x;
+				c.y = e.y;
+				c.dirX = e.dir;
+				cars.remove(e.id);
 			}
 			for( n in npcs )
 				n.remove();
+			for( c in cars )
+				c.remove();
 			nextMission(true);
-			announce("Save Load");
+			announce("Game Loaded");
 			setAction(save.act);
 		} else {
 			mission = -1;
@@ -190,6 +212,7 @@ class Game implements haxe.Public {
 	function setPanel(panel) {
 		if( panelMC != null ) panelMC.remove();
 		panelMC = panel;
+		panelTime = 0.;
 	}
 	
 	function addAction(id) {
@@ -200,6 +223,7 @@ class Game implements haxe.Public {
 		var f = [
 			doPunch,
 			doTalk,
+			doShot,
 		][id];
 		actions.push( { id:id, t:Data.ACTIONS[id], f:f, mc :mc } );
 	}
@@ -208,47 +232,70 @@ class Game implements haxe.Public {
 		hero = new Hero(scroll.x, scroll.y);
 		hero.life = hero.maxLife = 100;
 		
-		for( i in 0...11 ) {
-			var x, y;
-			do {
-				x = Std.random(mapWidth);
-				y = Std.random(mapHeight);
-			} while( collide[x][y] || road[x][y] );
-			var id = i % 11;
-			var inf = Data.NPC[id];
-			var n = new Npc(id, x + 0.5, y + 0.5, inf.money);
-			n.life = n.maxLife = inf.def;
-			n.power = inf.att;
-			n.onKill = function() {
-				if( n.money > 0 ) {
-					var k = ((n.money + 1) >> 1) + Std.random(n.money>>1);
-					for( i in 0...k ) {
-						var e = new Bill(n.x, n.y);
-						var a = Math.atan2(n.y - hero.y, n.x - hero.x) + (Math.random() * 2 - 1) * Math.PI / 4;
-						var p = (2 + Math.random() * 4) * 0.1;
-						e.pushX = Math.cos(a) * p;
-						e.pushY = Math.sin(a) * p;
-					}
-					n.money -= k;
-				}
+		for( i in 0...11 )
+			addNpc(i);
+		
+		var cpos = [[10, 26], [33, 31], [12, 55], [32, 14]];
+		for( i in 0...cpos.length ) {
+			var c = new Car(i, cpos[i][0], cpos[i][1]);
+			c.onKill = function() {
+				c.kill();
+				if( c.id == 1 && Lambda.has(quests, 10) )
+					addItem(Pizza);
 			}
-			n.onReallyKill = function() {
-				for( q in quests ) {
-					var qinf = Data.NPC[q].quest;
-					if( qinf.target == n.id ) {
-						if( qinf.kill ) questDone(q) else {
-							quests.remove(q);
-							showPanel("You have failed to complete " + Data.NPC[q] + "'s quest");
-						}
+		}
+	}
+	
+	function addNpc(id:Int) {
+		var x, y;
+		do {
+			x = Std.random(mapWidth);
+			y = Std.random(mapHeight);
+		} while( collide[x][y] || road[x][y] );
+		
+		var inf = Data.NPC[id];
+		var n = new Npc(id, x + 0.5, y + 0.5, inf.money);
+		n.life = n.maxLife = inf.def;
+		n.power = inf.att;
+		n.onKill = function() {
+			if( n.money > 0 ) {
+				var k = ((n.money + 1) >> 1) + Std.random(n.money>>1);
+				for( i in 0...k ) {
+					var e = new Bill(n.x, n.y);
+					var a = Math.atan2(n.y - hero.y, n.x - hero.x) + (Math.random() * 2 - 1) * Math.PI / 4;
+					var p = (2 + Math.random() * 4) * 0.1;
+					e.pushX = Math.cos(a) * p;
+					e.pushY = Math.sin(a) * p;
+				}
+				n.money -= k;
+			}
+			if( n.id == 7 && Lambda.has(quests, 0) && Lambda.has(items, Scissors) ) {
+				n.play(15);
+				questDone(0);
+			}
+		}
+		n.onReallyKill = function() {
+			for( q in quests ) {
+				var qinf = Data.NPC[q].quest;
+				if( Lambda.has(qinf.targets,n.id) ) {
+					if( qinf.kill ) {
+						var has = false;
+						for( t in qinf.targets )
+							for( e in entities ) {
+								var n = flash.Lib.as(e, Npc);
+								if( n != null && n.id == t )
+									has = true;
+							}
+						if( !has )
+							questDone(q);
+					} else {
+						quests.remove(q);
+						showPanel("You have failed to complete " + Data.NPC[q].name + "'s quest", true);
 					}
 				}
 			}
 		}
-		
-		new Car(0, 10, 26);
-		new Car(1, 33, 31);
-		new Car(2, 12, 55);
-		new Car(3, 32, 14);
+		return n;
 	}
 	
 	function getMoney(m) {
@@ -467,7 +514,7 @@ class Game implements haxe.Public {
 		return p;
 	}
 	
-	function showPanel( text : String ) {
+	function showPanel( text : String, ?delay ) {
 		var p = newPanel();
 		p.width = scene.width - 20;
 		var t = new h2d.Text(font, p);
@@ -478,6 +525,7 @@ class Game implements haxe.Public {
 		t.y = 5;
 		p.height = 10 + (t.textHeight>>1);
 		setPanel(p);
+		if( delay ) panelTime = 1.;
 	}
 	
 	
@@ -579,14 +627,43 @@ class Game implements haxe.Public {
 			menu.update(dt);
 				
 		} else if( panelMC != null ) {
-			if( Key.isToggled(K.SPACE) || Key.isToggled(K.ENTER) ) {
+			panelTime -= dt / 60;
+			if( (Key.isToggled(K.SPACE) || Key.isToggled(K.ENTER)) && panelTime < 0 ) {
 				panelMC.remove();
 				panelMC = null;
 			}
 		} else
 			updateGamePlay(dt);
 			
-		if( Key.isDown(K.ESCAPE) ) {
+		if( win ) {
+			if( winPanel ) {
+				if( panelMC == null ) {
+					scene.dispose();
+					startGame(engine);
+					return;
+				}
+			} else {
+				winTime += dt / 60;
+				var a = 0.8 - winTime * 0.2;
+				var b = winTime * 0.2;
+				var c = 1.2  - winTime * 0.2;
+				var r = winTime * 0.5;
+				scrollBitmap.color = null;
+				scrollBitmap.colorMatrix = h3d.Matrix.L([
+					a + r, b, b, 0,
+					b + r, a, b, 0,
+					b + r, b, c, 0,
+					0, 0, 0, 1,
+				]);
+				if( winTime > 3.5 ) {
+					winPanel = true;
+					save();
+					showPanel("Small Theft Auto\nMade in 48 hours for the Ludum Dare #25 contest\n\nCongratulations for finishing the game!\nPlease tweet me if you like it @ncannasse\nYou can also follow @shirogames : we are making independant games!\n\nPress action key to return to title.");
+				}
+			}
+		}
+			
+		if( Key.isDown(K.ESCAPE) && Key.isDown(K.CONTROL) ) {
 			saveObj.data.save = null;
 			saveObj.flush();
 			announce("Save Clear");
@@ -642,6 +719,14 @@ class Game implements haxe.Public {
 						c : save,
 					},
 					{
+						t : "Erase Save",
+						c : function() {
+							saveObj.data.save = null;
+							saveObj.flush();
+							showPanel("Save Clear.\nReload game to restart from scratch, or save again to cancel.");
+						},
+					},
+					{
 						t : "Exit",
 						c : function() {},
 					}
@@ -652,21 +737,33 @@ class Game implements haxe.Public {
 	
 		if( !isHurt && hero.life < 0 ) {
 			isHurt = true;
-			showPanel("You've been badly hurt, you should go to the hospital to heal yourself");
+			showPanel("You've been badly hurt, you should go to the hospital to heal yourself", true);
 		}
 			
 		missionCheck();
 				
 		
+		if( questsDone.length >= 10 && !Lambda.has(items, Angel) ) {
+			items.push(Angel);
+			addNpc(11);
+		}
+		
+		if( questsDone.length == Data.NPC.length && panelMC == null )
+			win = true;
+		
 		engine.render(scene);
+	
 	}
 
 	function save() {
-		var ent = [];
+		var ent = [], cars = [];
 		for( e in entities )
 			if( Std.is(e, Npc) ) {
 				var e : Npc = cast e;
 				ent.push( { id: e.id, x : e.x, m : e.money, y : e.y, life:e.life } );
+			} else if( Std.is(e, Car) ) {
+				var e : Car = cast e;
+				cars.push( { id : e.id, x : e.x, y : e.y, life : e.life, dir : e.dirX } );
 			}
 		var save : SaveData = {
 			act : curAction,
@@ -675,6 +772,7 @@ class Game implements haxe.Public {
 			actions : Lambda.array(Lambda.map(actions, function(a) return a.id)),
 			money : money,
 			e : ent,
+			cars : cars,
 			attack : hero.power,
 			life : hero.life,
 			mission : mission,
@@ -705,8 +803,12 @@ class Game implements haxe.Public {
 					var text = "Congratulations ! You bought " + name + " for $" + i.price + "\n";
 					if( i.text != null )
 						text += i.text;
-					else if( shop == Data.WEAPONS )
-						text += "Your attack power is now " + hero.power;
+					else if( shop == Data.WEAPONS ) {
+						if( i.i == MiniGun )
+							text += "You can now shot at everybody !";
+						else
+							text += "Your attack power is now " + hero.power;
+					}
 					this.items.push(i.i);
 					showPanel(text);
 				},
@@ -729,6 +831,18 @@ class Game implements haxe.Public {
 		}
 	}
 	
+	function doShot() {
+		if( hero.life <= 0 ) {
+			if( panelMC == null )
+				showPanel("You can't attack while you're badly hurt, wait to recover or go to the hospital");
+		} else {
+			for( i in 0...5 ) {
+				var a = Math.atan2(hero.dirY, hero.dirX) + (Math.random() * 2 - 1) * Math.PI / 16;
+				var e = new Bullet(hero.x + Math.cos(a) * 0.5, hero.y - 0.5 + Math.sin(a) * 0.5, a);
+			}
+		}
+	}
+	
 	function addItem(i) {
 		items.push(i);
 		showPanel("You got item : " + Data.ITEM_NAMES[Type.enumIndex(i)]);
@@ -743,7 +857,7 @@ class Game implements haxe.Public {
 			text += "\n You get $"+inf.quest.m+" as a reward";
 			getMoney(inf.quest.m);
 		}
-		if( ann ) announce(text) else showPanel(text);
+		if( ann ) announce(text) else showPanel(text,true);
 	}
 	
 	function doTalk() {
@@ -776,6 +890,7 @@ class Game implements haxe.Public {
 						{ t : "Give " + name, c : function() {
 							items.remove(i);
 							questDone(q);
+							panelTime = 0;
 						} },
 						{ t : "Cancel", c : function() {
 							setPanel(null);
@@ -786,12 +901,25 @@ class Game implements haxe.Public {
 					cancelNext = true;
 				}
 			}
-			if( Data.NPC[q].quest.target == n.id ) {
+			if( Lambda.has(Data.NPC[q].quest.targets,n.id) ) {
 				switch( q ) {
 				case 8:
 					giveItem(Drug);
 				case 5:
-					questDone(q,true);
+					questDone(q, true);
+				case 7:
+					giveItem(Pills);
+				case 10:
+					giveItem(Pizza);
+				case 6:
+					var isCar = false;
+					for( e in entities )
+						if( Std.is(e, Car) )
+							isCar = true;
+					if( !isCar ) {
+						questDone(q);
+						return;
+					}
 				default:
 				}
 			}
@@ -835,18 +963,22 @@ class Game implements haxe.Public {
 	
 	
 	public static var inst : Game;
+	public static var title : Title;
 	
 	static function updateLoop() {
 		Timer.update();
-		if( inst != null ) inst.update(Timer.tmod);
+		if( title != null ) title.update(Timer.tmod) else if( inst != null ) inst.update(Timer.tmod);
 	}
 
+	static function startGame(engine) {
+		inst = new Game(engine);
+		title = new Title();
+	}
 	
 	static function main() {
 		var engine = new h3d.Engine();
 		engine.onReady = function() {
-			inst = new Game(engine);
-			inst.init();
+			startGame(engine);
 		};
 		engine.init();
 		flash.Lib.current.addEventListener(flash.events.Event.ENTER_FRAME, function(_) updateLoop());

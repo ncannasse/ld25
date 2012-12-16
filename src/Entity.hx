@@ -47,7 +47,7 @@ class Entity {
 		dirX = 0;
 		dirY = 1;
 
-		if( c != Car && c != Bill ) {
+		if( c != Car && c != Bill && c != Bullet ) {
 			var stile = game.tiles.sub(0, 8 * 16, 16, 16, -16, -22);
 			stile.scaleToSize(32, 32);
 			shade = new h2d.Bitmap(stile);
@@ -73,7 +73,7 @@ class Entity {
 		return e.power * 2 < power;
 	}
 	
-	function kill() {
+	public function kill() {
 		for( i in 0...5 )
 			Part.explode(RED, Std.int(x * 16 - 8), Std.int(y * 16 - 16), i * Math.PI * 2/5, 100);
 		remove();
@@ -83,6 +83,10 @@ class Entity {
 		mc.remove();
 		if( shade != null )
 			shade.remove();
+		if( bounds != null )
+			bounds.remove();
+		if( cursor != null )
+			cursor.remove();
 		game.entities.remove(this);
 	}
 	
@@ -107,8 +111,8 @@ class Entity {
 			if( !isCar && e.power >= 5 )
 				life -= e.power * 0.5;
 			if( life < -maxLife ) {
-				onReallyKill();
 				kill();
+				onReallyKill();
 			}
 		} else {
 			life -= e.power;
@@ -117,6 +121,8 @@ class Entity {
 					life = 0.01;
 				else
 					onKill();
+				if( life < -maxLife * 0.5 )
+					life = -maxLife * 0.5;
 			}
 		}
 		showLife();

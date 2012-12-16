@@ -25,6 +25,9 @@ class SelectMenu extends h2d.ScaleGrid {
 			t.x = 10;
 			t.y = 10 + pos * 12;
 			t.text = o.t;
+			var w = 20 + (t.textWidth >> 1);
+			if( w > width )
+				width = w;
 			if( o.price != null ) {
 				var p = new h2d.Text(game.font, this);
 				p.text = "$" + o.price;

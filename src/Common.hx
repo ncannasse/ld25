@@ -25,6 +25,11 @@ class UIBMP extends flash.display.BitmapData {
 class CarsBMP extends flash.display.BitmapData {
 }
 
+
+@:bitmap("gfx/title.png")
+class TitleBMP extends flash.display.BitmapData {
+}
+
 typedef Layer = {
 	data : Array<Int>,
 	name : String,
@@ -43,7 +48,7 @@ typedef NpcData = {
 	var att : Int;
 	var def : Int;
 	var money : Int;
-	var quest : { ?target : Int, t : String, m : Int, ?kill : Bool };
+	var quest : { ?targets : Array<Int>, t : String, m : Int, ?kill : Bool };
 }
 
 typedef SaveData = {
@@ -55,6 +60,7 @@ typedef SaveData = {
 	life : Float,
 	actions : Array<Int>,
 	e : Array<{ id : Int, m : Int, life : Float, x : Float, y : Float }>,
+	cars : Array<{ id : Int, life : Float, x : Float, y : Float, dir : Int }>,
 	mission : Int,
 	quests : Array<Int>,
 	items : Array<Item>,
@@ -69,6 +75,9 @@ enum Item {
 	Pistol;
 	MiniGun;
 	Book;
+	Pills;
+	Pizza;
+	Angel;
 }
 
 

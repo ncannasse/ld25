@@ -6,12 +6,21 @@ class Car extends Entity {
 	
 	public function new(id, x,y) {
 		super(x, y);
+		this.id = id;
 		boundsW = 40 / 16;
 		boundsH = 8 / 16;
 		play(id);
 		power = 10;
 		life = maxLife = 100 * (id + 1);
 		dirX = Std.random(2) * 2 - 1;
+	}
+	
+	override function kill() {
+		var white = h2d.Tile.fromColor(0xFFFFFFFF).clone();
+		white.scaleToSize(16*3, 16);
+		for( i in 0...5 )
+			Part.explode(white, Std.int(x * 16 - 8), Std.int(y * 16 - 16), i * Math.PI * 2/5, 100);
+		remove();
 	}
 	
 	override function collide(x, y) {

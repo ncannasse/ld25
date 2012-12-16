@@ -35,7 +35,7 @@ class Npc extends Entity {
 		case 9:
 			speed *= 0.2;
 		}
-		anim = game.sprites[id];
+		anim = id == 11 ? game.sprites[16] : game.sprites[id];
 	}
 
 	static inline function K(x,y) return x | (y << 7)
@@ -44,6 +44,8 @@ class Npc extends Entity {
 	override function onCollide(e:Entity) {
 		if( Std.is(e, Npc) && wait > 0 )
 			return false;
+		if( Std.is(e, Bullet) )
+			e.onCollide(this);
 		return true;
 	}
 	
@@ -138,11 +140,11 @@ class Npc extends Entity {
 	
 	override function hitBy(e) {
 		super.hitBy(e);
-		
+
 		target = null;
 		path = null;
 
-		if( !Std.is(e, Hero) )
+		if( !(Std.is(e, Hero) || Std.is(e,Bullet)) )
 			return;
 		
 		if( frightenBy(e) )
@@ -159,7 +161,7 @@ class Npc extends Entity {
 			if( d < 7 && n.frightenBy(e) )
 				n.fleeFrom(e, 3);
 			// get some help !
-			if( d < 8 && Lambda.has(game.quests,n.id) && Data.NPC[n.id].quest.target == id && Data.NPC[n.id].quest.kill )
+			if( d < 8 && Lambda.has(game.quests,n.id) && Lambda.has(Data.NPC[n.id].quest.targets,id) && Data.NPC[n.id].quest.kill )
 				n.aggroTo(this);
 			else if( d < 5 && n.aggroBy(e) )
 				n.aggroTo(e);
@@ -241,8 +243,9 @@ class Npc extends Entity {
 		if( game.missionScan == null || !game.missionScan(this) ) {
 			setCursor(0x80FFFFFF);
 			for( q in game.quests )
-				if( Data.NPC[q].quest.target == id )
-					setCursor(0xFF00FF00);
+				for( t in Data.NPC[q].quest.targets )
+					if( t == id )
+						setCursor(0xFF00FF00);
 		} else
 			setCursor(0xFFFF0000);
 			
@@ -254,6 +257,7 @@ class Npc extends Entity {
 		} else if( life < maxLife && flee == null && aggro == null ) {
 			life += 0.03 * dt;
 		}
+		if( life > maxLife ) life = maxLife;
 		
 		if( flee != null ) {
 			flee -= Timer.deltaT;
@@ -274,7 +278,9 @@ class Npc extends Entity {
 			}
 			else {
 				moveBy(dx * speed * dt / d, dy * speed * dt / d);
-				if( aggro.attack > 0 )
+				if( aggro == null ) {
+					// skip
+				} else if( aggro.attack > 0 )
 					aggro.attack -= dt * 0.05;
 				else if( d < 1 ) {
 					aggro.attack += Math.random() + 0.2;
