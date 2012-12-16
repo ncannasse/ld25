@@ -26,27 +26,33 @@ class Game implements haxe.Public {
 	var showBounds : Bool;
 	
 	var menu : SelectMenu;
-	var panel : h2d.Sprite;
+	var panelMC : h2d.Sprite;
 	
 	var money : Int;
 	var moneyUI : h2d.Text;
-	
-	var attack : Int = 1;
-	var life : Float = 100;
 	
 	var mission : Int;
 	var missionText : h2d.Text;
 	var missionCheck : Void -> Void;
 	var missionScan : Npc -> Bool;
+	var missionPanel : h2d.ScaleGrid;
 	
 	var miniMap : h2d.Bitmap;
 	var inShop : Bool = false;
 	
 	var isHurt : Bool;
 	var healCount : Int;
+	
+	var saveObj : flash.net.SharedObject;
 
 	var curAction : Int;
 	var actions : Array<{ id : Int, t : String, f : Void -> Void, mc : h2d.Bitmap }>;
+
+	var quests : Array<Int>;
+	var questsDone : Array<Int>;
+	var items : Array<Item>;
+	
+	var saveString : String;
 			
 	function new(e) {
 		this.engine = e;
@@ -54,6 +60,10 @@ class Game implements haxe.Public {
 	
 	public function init() {
 		entities = [];
+		quests = [];
+		questsDone = [];
+		items = [];
+		
 		scene = new h2d.Scene();
 		scene.setFixedSize(380, 250);
 		var t = new Tiles(0, 0, true);
@@ -100,13 +110,12 @@ class Game implements haxe.Public {
 		mpanel.height = 30;
 		mpanel.y = scene.height - mpanel.height + 3;
 		mpanel.alpha = 0.95;
+		missionPanel = mpanel;
 		
 		missionText = new h2d.Text(font, mpanel);
 		missionText.x = 10;
 		missionText.maxWidth = (scene.width - 20) * 2;
 		missionText.scaleX = missionText.scaleY = 0.5;
-		mission = -1;
-		nextMission();
 		
 		initMap();
 		scroll = { x : 15, y : 27 };
@@ -124,29 +133,76 @@ class Game implements haxe.Public {
 		miniMap.alpha = 0.5;
 		initEnt();
 		
-		addAction(0,"Punch",doPunch);
-		
 		moneyUI = new h2d.Text(font, scene);
 		moneyUI.x = 5;
 		moneyUI.y = 5;
 		moneyUI.textColor = 0xFFEFE161;
 		moneyUI.dropShadow = { dx : 1, dy : 2, color : 0, alpha : 0.5 };
+		
+		saveObj = flash.net.SharedObject.getLocal("save3");
+		var save = saveObj.data.save;
+		if( save != null ) {
+			var save : SaveData = haxe.Unserializer.run(save);
+			money = save.money;
+			quests = save.quests;
+			items = save.items;
+			questsDone = save.questsDone;
+			hero.power = save.attack;
+			hero.x = save.x;
+			hero.y = save.y;
+			hero.life = save.life;
+			mission = save.mission;
+			for( a in save.actions )
+				addAction(a);
+			var npcs = new IntHash();
+			for( e in entities ) {
+				var n = flash.Lib.as(e, Npc);
+				if( n == null ) continue;
+				npcs.set(n.id, n);
+			}
+			for( e in save.e ) {
+				var n = npcs.get(e.id);
+				n.life = e.life;
+				n.x = e.x;
+				n.y = e.y;
+				n.money = e.m;
+				npcs.remove(e.id);
+			}
+			for( n in npcs )
+				n.remove();
+			nextMission(true);
+			announce("Save Load");
+			setAction(save.act);
+		} else {
+			mission = -1;
+			addAction(0);
+			nextMission();
+		}
+				
 		moneyUI.text = "$" + money;
 	}
 	
 	static var disableColor = new h3d.Vector(0.5, 0.5, 0.5, 1);
 	
-	function addAction(id, text, f) {
+	function setPanel(panel) {
+		if( panelMC != null ) panelMC.remove();
+		panelMC = panel;
+	}
+	
+	function addAction(id) {
 		var mc = new h2d.Bitmap(tiles.sub(id * 16, 208, 16, 16), scene);
 		mc.x = 5 + actions.length * 20;
 		mc.y = scene.height - 40;
 		if( actions.length > 0 ) mc.color = disableColor;
-		actions.push( { id:id, t:text, f:f, mc :mc } );
+		var f = [
+			doPunch,
+			doTalk,
+		][id];
+		actions.push( { id:id, t:Data.ACTIONS[id], f:f, mc :mc } );
 	}
 	
 	function initEnt() {
 		hero = new Hero(scroll.x, scroll.y);
-		hero.power = 2;
 		hero.life = hero.maxLife = 100;
 		
 		for( i in 0...11 ) {
@@ -156,13 +212,13 @@ class Game implements haxe.Public {
 				y = Std.random(mapHeight);
 			} while( collide[x][y] || road[x][y] );
 			var id = i % 11;
-			var n = new Npc(id, x + 0.5, y + 0.5);
-			var inf = Data.NPC[n.id];
+			var inf = Data.NPC[id];
+			var n = new Npc(id, x + 0.5, y + 0.5, inf.money);
 			n.life = n.maxLife = inf.def;
 			n.power = inf.att;
 			n.onKill = function() {
-				if( inf.money > 0 ) {
-					var k = ((inf.money + 1) >> 1) + Std.random(inf.money>>1);
+				if( n.money > 0 ) {
+					var k = ((n.money + 1) >> 1) + Std.random(n.money>>1);
 					for( i in 0...k ) {
 						var e = new Bill(n.x, n.y);
 						var a = Math.atan2(n.y - hero.y, n.x - hero.x) + (Math.random() * 2 - 1) * Math.PI / 4;
@@ -170,7 +226,18 @@ class Game implements haxe.Public {
 						e.pushX = Math.cos(a) * p;
 						e.pushY = Math.sin(a) * p;
 					}
-					inf.money -= k;
+					n.money -= k;
+				}
+			}
+			n.onReallyKill = function() {
+				for( q in quests ) {
+					var qinf = Data.NPC[q].quest;
+					if( qinf.target == n.id ) {
+						if( qinf.kill ) questDone(q) else {
+							quests.remove(q);
+							showPanel("You have failed to complete " + Data.NPC[q] + "'s quest");
+						}
+					}
 				}
 			}
 		}
@@ -198,8 +265,8 @@ class Game implements haxe.Public {
 		announceText.text = text;
 	}
 	
-	function nextMission() {
-		mission++;
+	function nextMission( load = false ) {
+		if( !load ) mission++;
 		var text, miss, scan : Npc -> Bool = null;
 		switch( mission ) {
 		case 0:
@@ -207,31 +274,81 @@ class Game implements haxe.Public {
 			miss = function() {
 				if( money >= 10 ) nextMission();
 			};
-			scan = function(n) return Data.NPC[n.id].att <= attack;
+			scan = function(n) return n.power <= hero.power && n.money > 0;
 		case 1:
-			showPanel("You have completed the first mission ! Look at the panel below to check next objective");
+			if( !load ) showPanel("You have completed the first mission ! Look at the panel below to check next objective");
 			text = "Go buy a weapon at your favorite shop in the city center.";
 			miss = function() {
-				if( attack > 1 ) nextMission();
+				if( hero.power > 1 ) nextMission();
 			};
 		case 2:
 			text = "Try to get $30 from people. But be careful to hide yourself from other peasants.";
 			miss = function() {
 				if( money >= 30 ) nextMission();
 			};
-			scan = function(n) return Data.NPC[n.id].att <= attack;
+			scan = function(n) return n.power <= hero.power && n.money > 0;
 		case 3:
-			text = "Go buy an item at the items shop !";
+			text = "Go buy the Book at the items shop !";
 			miss = function() {
-				
+				if( actions.length > 1 ) nextMission();
+			};
+		case 4:
+			text = "Select the Talk Action : use the '2' Action Key";
+			miss = function() {
+				if( curAction == 1 ) nextMission();
+			}
+		case 5:
+			var id = 8;
+			text = "Go talk to " + Data.NPC[id].name + ", he might have a job for you.";
+			miss = function() {
+				if( curAction != 1 )  {
+					mission--;
+					nextMission(true);
+				} else if( Lambda.has(quests,8) ) nextMission();
+			};
+			scan = function(n) return n.id == id;
+		case 6:
+			text = "Complete the job you got.\nCheck the green point on the Minimap for Job target";
+			miss = function() {
+				if( Lambda.has(questsDone,8) ) nextMission();
+			};
+		case 7:
+			text = "Talk again to Glaze";
+			miss = function()  {
+				if( Lambda.has(quests, 5) ) nextMission();
+			};
+			scan = function(n) return n.id == 5;
+		case 8:
+			text = "Talk to the boss";
+			miss = function()  {
+				if( Lambda.has(questsDone, 5) ) nextMission();
+			};
+		case 9:
+			text = "Buy a Knife at the weapon shop";
+			miss = function()  {
+				if( Lambda.has(items, Knife) ) nextMission();
+			};
+		case 10:
+			text = "Activate Attack Mode : use the '1' Action Key";
+			miss = function()  {
+				if( curAction == 0 ) nextMission();
+			};
+		case 11:
+			text = "Hit Glaze until he die";
+			miss = function()  {
+				if( curAction != 0 )  {
+					mission--;
+					nextMission(true);
+				} else if( Lambda.has(questsDone, 4) ) nextMission();
 			};
 		default:
-			text = "TODO";
+			text = "Play as you wish";
 			miss = function() {
 			};
 		}
 		missionText.text = "Mission " + (mission + 1) + " : " + text;
-		missionText.y = (30 - (missionText.textHeight>>1)) >> 1;
+		missionText.y = (30 - (missionText.textHeight >> 1)) >> 1;
+		missionPanel.colorAdd = new h3d.Vector(0.5, 0.5, 0.5, 0);
 		missionCheck = miss;
 		missionScan = scan;
 	}
@@ -336,52 +453,28 @@ class Game implements haxe.Public {
 		}
 	}
 	
-	function doLook(n:Npc) {
-		var p = newPanel();
-		p.width = 150;
-		p.height = 50;
-		var b = new h2d.Bitmap(n.anim[0], p);
-		b.x = 20;
-		b.y = 35;
-		var t = new h2d.Text(font, p);
-		t.x = 40;
-		t.y = 10;
-		var inf = Data.NPC[n.id];
-		t.text = 'Name : ${inf.name}\nAge : ${inf.age}\nPower : ${inf.att}\nLife : ${Math.ceil(n.life)}/${inf.def}';
-		t.scaleX = t.scaleY = 0.5;
-		panel = p;
-	}
 	
-	function newPanel() {
-		var p = new h2d.ScaleGrid(uiTile, 4, 4, scene);
+	function newPanel( ?parent : h2d.Sprite ) {
+		if( parent == null ) parent = scene;
+		var p = new h2d.ScaleGrid(uiTile, 4, 4, parent);
 		p.x = 10;
 		p.y = 10;
 		return p;
 	}
 	
 	function showPanel( text : String ) {
-		if( panel != null )
-			panel.remove();
 		var p = newPanel();
 		p.width = scene.width - 20;
-		p.height = 25;
 		var t = new h2d.Text(font, p);
 		t.text = text;
 		t.maxWidth = (scene.width - 40) * 2;
 		t.scaleX = t.scaleY = 0.5;
-		t.y = (25 - (t.textHeight >> 1)) >> 1;
 		t.x = (p.width - (t.textWidth >> 1)) >> 1;
-		panel = p;
+		t.y = 5;
+		p.height = 10 + (t.textHeight>>1);
+		setPanel(p);
 	}
 	
-	function doSteal(n:Npc) {
-		var inf = Data.NPC[n.id];
-		if( inf.att > attack ) {
-			showPanel("You should not attack someone stronger than you !");
-			return;
-		}
-		
-	}
 	
 	function updateGamePlay(dt:Float ) {
 		var ds = hero.speed * dt;
@@ -402,6 +495,12 @@ class Game implements haxe.Public {
 	}
 	
 	
+	function setAction(i) {
+		curAction = i;
+		for( i in 0...actions.length )
+			actions[i].mc.color = i == curAction ? null : disableColor;
+	}
+	
 	function update(dt:Float) {
 		
 		if( announceText != null ) {
@@ -411,6 +510,14 @@ class Game implements haxe.Public {
 				announceText.remove();
 				announceText = null;
 			}
+		}
+		
+		if( missionPanel.colorAdd != null ) {
+			missionPanel.colorAdd.x -= dt * 0.1;
+			missionPanel.colorAdd.y -= dt * 0.1;
+			missionPanel.colorAdd.z -= dt * 0.1;
+			if( missionPanel.colorAdd.x < 0 )
+				missionPanel.colorAdd = null;
 		}
 		
 		Part.updateAll(dt);
@@ -429,10 +536,7 @@ class Game implements haxe.Public {
 		
 		for( i in 0...9 )
 			if( (Key.isToggled(K.NUMBER_1 + i) || Key.isToggled(K.NUMPAD_1 + i)) && actions[i] != null && i != curAction ) {
-				curAction = i;
-				for( i in 0...actions.length )
-					actions[i].mc.color = i == curAction ? null : disableColor;
-					
+				setAction(i);
 				announce("Action : " + actions[i].t);
 				break;
 			}
@@ -459,7 +563,7 @@ class Game implements haxe.Public {
 					if( money < o.price )
 						showPanel("You don't have enough money");
 					else {
-						money -= o.price;
+						getMoney(-o.price);
 						o.c();
 					}
 				} else
@@ -469,13 +573,22 @@ class Game implements haxe.Public {
 			
 			menu.update(dt);
 				
-		} else if( panel != null ) {
+		} else if( panelMC != null ) {
 			if( Key.isToggled(K.SPACE) || Key.isToggled(K.ENTER) ) {
-				panel.remove();
-				panel = null;
+				panelMC.remove();
+				panelMC = null;
 			}
 		} else
 			updateGamePlay(dt);
+			
+		if( Key.isDown(K.ESCAPE) ) {
+			saveObj.data.save = null;
+			saveObj.flush();
+			announce("Save Clear");
+		}
+			
+		if( Key.isToggled("S".code) && Key.isDown(K.CONTROL) )
+			save();
 			
 		if( Key.isToggled("B".code) )
 			showBounds = !showBounds;
@@ -498,6 +611,7 @@ class Game implements haxe.Public {
 			if( !inShop ) {
 				inShop = true;
 				var price = 20 + healCount * 10;
+				if( price > money ) price = money;
 				menu = new SelectMenu([
 					{
 						t : "Heal",
@@ -523,30 +637,62 @@ class Game implements haxe.Public {
 		}
 			
 		missionCheck();
+				
 		
 		engine.render(scene);
 	}
 
-	function initShop( items : Array<Data.ShopItem> ) {
+	function save() {
+		var ent = [];
+		for( e in entities )
+			if( Std.is(e, Npc) ) {
+				var e : Npc = cast e;
+				ent.push( { id: e.id, x : e.x, m : e.money, y : e.y, life:e.life } );
+			}
+		var save : SaveData = {
+			act : curAction,
+			x : hero.x,
+			y : hero.y,
+			actions : Lambda.array(Lambda.map(actions, function(a) return a.id)),
+			money : money,
+			e : ent,
+			attack : hero.power,
+			life : hero.life,
+			mission : mission,
+			quests : quests,
+			items : items,
+			questsDone : questsDone,
+		};
+		var s = haxe.Serializer.run(save);
+		saveObj.data.save = s;
+		saveObj.flush();
+		announce("Saved");
+	}
+	
+	function initShop( shop : Array<Data.ShopItem> ) {
 		if( inShop )
 			return;
 		inShop = true;
 		var options : SelectMenu.Options = [];
-		for( i in items )
+		for( i in shop ) {
+			if( Lambda.has(items, i.i) )
+				continue;
+			var name = Data.ITEM_NAMES[Type.enumIndex(i.i)];
 			options.push( {
-				t : i.name,
+				t : name,
 				price : i.price,
 				c : function() {
-					items.remove(i);
 					i.f();
-					var text = "Congratulations ! You bought " + i.name + " for $" + i.price + "\n";
+					var text = "Congratulations ! You bought " + name + " for $" + i.price + "\n";
 					if( i.text != null )
 						text += i.text;
-					else if( items == Data.WEAPONS )
-						text += "Your attack power is now " + attack;
-										showPanel(text);
+					else if( shop == Data.WEAPONS )
+						text += "Your attack power is now " + hero.power;
+					this.items.push(i.i);
+					showPanel(text);
 				},
 			});
+		}
 		options.push( { t : "Exit", price : null, c : function() { } });
 		menu = new SelectMenu(options);
 	}
@@ -554,14 +700,118 @@ class Game implements haxe.Public {
 	//----------------- ACTIONS
 	
 	function doPunch() {
-		if( hero.life <= 0 )
-			showPanel("You can't attack while you're badly hurt, wait to recover or go to the hospital");
-		else
-			hero.attack();
+		if( hero.life <= 0 ) {
+			if( panelMC == null )
+				showPanel("You can't attack while you're badly hurt, wait to recover or go to the hospital");
+		}
+		else {
+			for( e in hero.getTargets() )
+				e.hitBy(hero);
+		}
+	}
+	
+	function addItem(i) {
+		items.push(i);
+		showPanel("You got item : " + Data.ITEM_NAMES[Type.enumIndex(i)]);
+	}
+	
+	function questDone(q,?ann) {
+		quests.remove(q);
+		questsDone.push(q);
+		var inf = Data.NPC[q];
+		var text = "You have completed " + inf.name + "'s quest !";
+		if( inf.quest.m > 0 ) {
+			text += "\n You get $"+inf.quest.m+" as a reward";
+			getMoney(inf.quest.m);
+		}
+		if( ann ) announce(text) else showPanel(text);
 	}
 	
 	function doTalk() {
-		trace("TODO");
+		var n = flash.Lib.as(hero.getTargets()[0], Npc);
+		if( n == null )
+			return;
+				
+		setPanel(new h2d.Sprite(scene));
+
+		var p = newPanel(panelMC);
+		p.width = 150;
+		p.height = 50;
+		var b = new h2d.Bitmap(n.anim[0], p);
+		b.x = 20;
+		b.y = 35;
+		var t = new h2d.Text(font, p);
+		t.x = 40;
+		t.y = 10;
+		var inf = Data.NPC[n.id];
+		t.text = 'Name : ${inf.name}\nAge : ${inf.age}\nPower : ${inf.att}\nLife : ${Math.ceil(n.life)}/${inf.def}';
+		t.scaleX = t.scaleY = 0.5;
+		
+		var cancelNext = false;
+		
+		for( q in quests ) {
+			function giveItem(i) {
+				if( Lambda.has(items, i) ) {
+					var name = Data.ITEM_NAMES[Type.enumIndex(i)];
+					menu = new SelectMenu([
+						{ t : "Give " + name, c : function() {
+							items.remove(i);
+							questDone(q);
+						} },
+						{ t : "Cancel", c : function() {
+							setPanel(null);
+						} },
+					]);
+					menu.x = 120;
+					menu.y = 15;
+					cancelNext = true;
+				}
+			}
+			if( Data.NPC[q].quest.target == n.id ) {
+				switch( q ) {
+				case 8:
+					giveItem(Drug);
+				case 5:
+					questDone(q,true);
+				default:
+				}
+			}
+		}
+		
+		if( cancelNext )
+			return;
+		
+		if( !Lambda.has(questsDone,n.id) && inf.quest != null ) {
+			var d = newPanel(panelMC);
+			d.x = 10;
+			d.y = 70;
+			d.width = 300;
+			var t = new h2d.Text(font, d);
+			t.scaleX = t.scaleY = 0.5;
+			t.maxWidth = 280 * 2;
+			t.x = 10;
+			t.y = 10;
+			t.text = inf.quest.t;
+			d.height = 20 + (t.textHeight >> 1);
+			if( !Lambda.has(quests,n.id) ) {
+				menu = new SelectMenu([
+					{ t : "Accept Mission", c : function() {
+						quests.push(n.id);
+						setPanel(null);
+						switch( n.id ) {
+						case 8:
+							addItem(Drug);
+							
+						}
+					} },
+					{ t : "Cancel", c : function() {
+						setPanel(null);
+					} },
+				]);
+				menu.x = 120;
+				menu.y = 15;
+			}
+		}
 	}
 	
 	

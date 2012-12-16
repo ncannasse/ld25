@@ -79,7 +79,7 @@ class Entity {
 		remove();
 	}
 	
-	function remove() {
+	public function remove() {
 		mc.remove();
 		if( shade != null )
 			shade.remove();
@@ -87,6 +87,9 @@ class Entity {
 	}
 	
 	public dynamic function onKill() {
+	}
+	
+	public dynamic function onReallyKill() {
 	}
 	
 	public function hitBy( e : Entity ) {
@@ -101,10 +104,12 @@ class Entity {
 		Part.explode(RED, Std.int(x * 16 - 8), Std.int(y * 16 - 16), angle, Std.int(relPower * 10));
 		var isCar = Std.is(this, Npc) && Std.is(e, Car);
 		if( life <= 0 ) {
-			if( !isCar )
+			if( !isCar && e.power >= 5 )
 				life -= e.power * 0.5;
-			if( life < -maxLife )
+			if( life < -maxLife ) {
+				onReallyKill();
 				kill();
+			}
 		} else {
 			life -= e.power;
 			if( life <= 0 ) {

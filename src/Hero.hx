@@ -3,6 +3,7 @@ class Hero extends Entity {
 
 	public function new(x,y) {
 		super(x, y);
+		power = 1;
 		play(11);
 		setCursor(0xFFFFFFFF);
 		cursor.alpha = 1;
@@ -28,9 +29,8 @@ class Hero extends Entity {
 			dt *= 0.7;
 		super.update(dt);
 	}
-	
-	public function attack() {
-		
+
+	public function getTargets() : Array<Entity> {
 		var hx = ((x - 0.5) * 16 + dirX * 12) / 16;
 		var hy = (y * 16 + dirY * 15 - 14) / 16;
 		var sizeX = 1.;
@@ -43,11 +43,13 @@ class Hero extends Entity {
 		b.x = hx * 16;
 		b.y = hy * 16;
 		*/
+		var targets = [];
 		
 		for( e in game.entities )
-			if( e != this && (e.hitBox(hx+sizeX*0.5,hy+sizeY*0.5) || e.hitBox(hx, hy) || e.hitBox(hx + sizeX, hy) || e.hitBox(hx, hy + sizeY) || e.hitBox(hx + sizeX, hy + sizeY)) ) {
-				e.hitBy(this);
-			}
+			if( e != this && (e.hitBox(hx + sizeX * 0.5, hy + sizeY * 0.5) || e.hitBox(hx, hy) || e.hitBox(hx + sizeX, hy) || e.hitBox(hx, hy + sizeY) || e.hitBox(hx + sizeX, hy + sizeY)) )
+				targets.push(e);
+		
+		return cast targets;
 	}
-	
+		
 }

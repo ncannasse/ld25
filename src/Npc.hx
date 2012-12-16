@@ -8,9 +8,12 @@ class Npc extends Entity {
 	var lock : Int;
 	var flee : Null<Float>;
 	var aggro : { target : Entity, time : Float, attack : Float };
+	var moneyWin : Float = 15.;
+	public var money : Int;
 	
-	public function new(id,x,y) {
+	public function new(id,x,y,money) {
 		super(x, y);
+		this.money = money;
 		this.id = id;
 		speed = 0.05;
 		animSpeed = 0.15;
@@ -155,7 +158,10 @@ class Npc extends Entity {
 			var d = Math.sqrt(dx * dx + dy * dy);
 			if( d < 7 && n.frightenBy(e) )
 				n.fleeFrom(e, 3);
-			if( d < 5 && n.aggroBy(e) )
+			// get some help !
+			if( d < 8 && Lambda.has(game.quests,n.id) && Data.NPC[n.id].quest.target == id && Data.NPC[n.id].quest.kill )
+				n.aggroTo(this);
+			else if( d < 5 && n.aggroBy(e) )
 				n.aggroTo(e);
 		}
 	}
@@ -232,9 +238,12 @@ class Npc extends Entity {
 	
 	override function update(dt:Float) {
 		
-		if( game.missionScan == null || !game.missionScan(this) )
+		if( game.missionScan == null || !game.missionScan(this) ) {
 			setCursor(0x80FFFFFF);
-		else
+			for( q in game.quests )
+				if( Data.NPC[q].quest.target == id )
+					setCursor(0xFF00FF00);
+		} else
 			setCursor(0xFFFF0000);
 			
 		if( life <= 0 ) {
@@ -308,8 +317,14 @@ class Npc extends Entity {
 					walkOnStreet = false;
 			}
 		}
-		
 		super.update(dt);
+		
+		moneyWin -= dt / 60;
+		if( moneyWin < 0. ) {
+			moneyWin += 5 + Math.random() * 15;
+			if( money < Data.NPC[id].money )
+				money++;
+		}
 	}
 	
 }

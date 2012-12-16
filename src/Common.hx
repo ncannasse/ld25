@@ -36,3 +36,39 @@ typedef Tiled = {
 	layers : Array<Layer>,
 }
 
+typedef NpcData = {
+	var id : Int;
+	var name : String;
+	var age : Int;
+	var att : Int;
+	var def : Int;
+	var money : Int;
+	var quest : { ?target : Int, t : String, m : Int, ?kill : Bool };
+}
+
+typedef SaveData = {
+	act : Int,
+	x : Float,
+	y : Float,
+	attack : Float,
+	money : Int,
+	life : Float,
+	actions : Array<Int>,
+	e : Array<{ id : Int, m : Int, life : Float, x : Float, y : Float }>,
+	mission : Int,
+	quests : Array<Int>,
+	items : Array<Item>,
+	questsDone : Array<Int>,
+}
+
+enum Item {
+	Scissors;
+	Drug;
+	BaseBat;
+	Knife;
+	Pistol;
+	MiniGun;
+	Book;
+}
+
+
