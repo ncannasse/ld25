@@ -76,7 +76,10 @@ class Game implements haxe.Public {
 		actions = [];
 		
 		font = new h2d.Font("PixelFont", 16);
-		uiTile = h2d.Tile.fromBitmap(new UIBMP(0, 0, true));
+		
+		var ui = new UIBMP(0, 0, true);
+		clearTile(ui, 0xFFFF00FF);
+		uiTile = h2d.Tile.fromBitmap(ui);
 		tiles = h2d.Tile.fromBitmap(t);
 		cursor = tiles.sub(32, 144, 16, 16);
 		sprites = h2d.Tile.autoCut(s, 16).tiles;
@@ -355,8 +358,8 @@ class Game implements haxe.Public {
 		missionScan = scan;
 	}
 	
-	function clearTile(t:flash.display.BitmapData) {
-		var bg = t.getPixel32(t.width - 1, t.height - 1);
+	function clearTile(t:flash.display.BitmapData, bg:UInt= 0) {
+		if( bg == 0 ) bg = t.getPixel32(t.width - 1, t.height - 1);
 		t.lock();
 		for( x in 0...t.width )
 			for( y in 0...t.height )
