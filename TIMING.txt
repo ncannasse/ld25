@@ -1,3 +1,6 @@
+Day 1 : mostly gfx and level edit
+---------------------------------
+
 10 am : start
 10-12 am : city tiles, first screen
 12-13 am : city load display + hero sprite move + collides ok
@@ -11,3 +14,18 @@
 20:30-21:30 : start gameplay, menu system
 21:30-22:30 : missions begin, minimap
 22:30-23:00 : title screen
+23:00-01:00 : vehicles x3 + more map design
+01:00-01:45 : more gfx, map almost complete
+
+Day 2 : Gameplay
+----------------
+
+TODO :
+	attack people, they fight or flee (mini fight system)
+	life bar -> hospital
+	money management
+	weapons
+	missions
+	attack vehicles
+	
+	

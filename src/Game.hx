@@ -8,6 +8,7 @@ class Game implements haxe.Public {
 	var uiTile : h2d.Tile;
 	var cursor : h2d.Tile;
 	var sprites : Array<Array<h2d.Tile>>;
+	var cars : Array<Array<h2d.Tile>>;
 	var scroll : { x : Float, y : Float };
 
 	var scrollBitmap : h2d.CachedBitmap;
@@ -18,6 +19,7 @@ class Game implements haxe.Public {
 	var entities : Array<Entity>;
 	var collide : Array<Array<Bool>>;
 	var road : Array<Array<Bool>>;
+	var roadOrPass : Array<Array<Bool>>;
 	
 	var mapWidth : Int;
 	var mapHeight : Int;
@@ -48,14 +50,19 @@ class Game implements haxe.Public {
 		scene.setFixedSize(380, 250);
 		var t = new Tiles(0, 0, true);
 		var s = new Sprites(0, 0, true);
+		var c = new CarsBMP(0, 0, true);
 		clearTile(t);
 		clearTile(s);
+		clearTile(c);
 		
 		font = new h2d.Font("PixelFont", 16);
 		uiTile = h2d.Tile.fromBitmap(new UIBMP(0, 0, true));
 		tiles = h2d.Tile.fromBitmap(t);
 		cursor = tiles.sub(32, 144, 16, 16);
 		sprites = h2d.Tile.autoCut(s, 16).tiles;
+		
+		
+		cars = h2d.Tile.autoCut(c, 16 * 3, 16 * 2).tiles;
 		for( sx in sprites )
 			for( i in 0...sx.length ) {
 				var s = sx[i];
@@ -63,6 +70,15 @@ class Game implements haxe.Public {
 				s.scaleToSize(s.width * 2, s.height * 2);
 				sx[i] = s;
 			}
+			
+		for( sx in cars )
+			for( i in 0...sx.length ) {
+				var s = sx[i];
+				s = s.sub(0, 0, s.width, s.height, -s.width, 5-(s.height * 2) );
+				s.scaleToSize(s.width * 2, s.height * 2);
+				sx[i] = s;
+			}
+			
 		
 		scrollBitmap = new h2d.CachedBitmap(scene, scene.width, scene.height);
 		scrollContent = new h2d.Layers(scrollBitmap);
@@ -110,6 +126,11 @@ class Game implements haxe.Public {
 			var n = new Npc(i, x + 0.5, y + 0.5);
 			//if( i == 0 ) doLook(n);
 		}
+		
+		new Car(0, 10, 26);
+		new Car(1, 33, 31);
+		new Car(2, 12, 55);
+		new Car(3, 32, 14);
 	}
 	
 	function nextMission() {
@@ -152,9 +173,11 @@ class Game implements haxe.Public {
 			}
 		collide	= [];
 		road = [];
+		roadOrPass = [];
 		for( x in 0...map.width ) {
 			collide[x] = [];
 			road[x] = [];
+			roadOrPass[x] = [];
 		}
 		mapWidth = map.width;
 		mapHeight = map.height;
@@ -179,7 +202,9 @@ class Game implements haxe.Public {
 						switch( c-1 ) {
 						case 0, 1, 2, 33, 34:
 							road[x][y] = true;
+							roadOrPass[x][y] = true;
 						case 7, 36: // walk way
+							roadOrPass[x][y] = true;
 						default:
 						}
 					}
@@ -210,6 +235,11 @@ class Game implements haxe.Public {
 				t.alpha = 0.5;
 				t.blendMode = Add;
 				tmap[101] = l;
+			case "over":
+				plan = Const.PLAN_OVER;
+			case "overShades":
+				plan = Const.PLAN_OVER;
+				t.alpha = 0.3;
 			default:
 			}
 			for( y in 0...mapHeight ) {
@@ -323,7 +353,7 @@ class Game implements haxe.Public {
 		if( ix < 0 ) ix = 0;
 		if( iy < 0 ) iy = 0;
 		if( ix + scene.width > mapWidth * 16 ) ix = mapWidth * 16 - scene.width;
-		if( iy + scene.height > mapHeight * 16 ) iy = mapHeight * 16 - scene.height;
+		if( iy + scene.height > mapHeight * 16 + 20 ) iy = mapHeight * 16 - scene.height + 20;
 		scrollContent.x = -ix;
 		scrollContent.y = -iy;
 		

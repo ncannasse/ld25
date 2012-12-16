@@ -21,6 +21,10 @@ class HaloBMP extends flash.display.BitmapData {
 class UIBMP extends flash.display.BitmapData {
 }
 
+@:bitmap("gfx/cars.png")
+class CarsBMP extends flash.display.BitmapData {
+}
+
 typedef Layer = {
 	data : Array<Int>,
 	name : String,
