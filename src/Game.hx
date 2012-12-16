@@ -113,17 +113,25 @@ class Game implements haxe.Public {
 		miniMap.y = 5;
 		miniMap.blendMode = Add;
 		miniMap.alpha = 0.5;
-		
-
+		initEnt();
+	}
+	
+	function initEnt() {
 		hero = new Hero(scroll.x, scroll.y);
+		hero.power = 2;
+		hero.life = hero.maxLife = 100;
 		
-		for( i in 0...11 ) {
+		for( i in 0...22 ) {
 			var x, y;
 			do {
 				x = Std.random(mapWidth);
 				y = Std.random(mapHeight);
 			} while( collide[x][y] || road[x][y] );
-			var n = new Npc(i, x + 0.5, y + 0.5);
+			var id = i % 11;
+			var n = new Npc(id, x + 0.5, y + 0.5);
+			var inf = NPC[n.id];
+			n.life = n.maxLife = inf.def;
+			n.power = inf.att;
 			//if( i == 0 ) doLook(n);
 		}
 		
@@ -255,15 +263,15 @@ class Game implements haxe.Public {
 	
 	static var NPC = [
 		{ name : "JeeZee", age : 30, att : 5, def : 10 },
-		{ name : "Leela", age : 7, att : 0, def : 0 },
-		{ name : "Jimjim", age : 9, att : 1, def : 0 },
-		{ name : "Weido", age : 45, att : 20, def : 5 },
+		{ name : "Leela", age : 7, att : 0, def : 5 },
+		{ name : "Jimjim", age : 9, att : 1, def : 5 },
+		{ name : "Weido", age : 45, att : 20, def : 10 },
 		{ name : "Tizon", age : 35, att : 50, def : 40 },
 		{ name : "Glaze", age : 30, att : 10, def : 15 },
 		{ name : "Bob", age : 22, att : 5, def : 20 },
 		{ name : "Miss Auto", age : 25, att : 5, def : 10 },
 		{ name : "Mr Punk", age : 30, att : 25, def : 30 },
-		{ name : "Grandma Kalash", age : 80, att : 2, def : 1 },
+		{ name : "Grandma Kalash", age : 80, att : 8, def : 30 },
 		{ name : "Snoop", age : 5, att : 15, def : 10 },
 	];
 	
@@ -278,7 +286,7 @@ class Game implements haxe.Public {
 		t.x = 40;
 		t.y = 10;
 		var inf = NPC[n.id];
-		t.text = 'Name : ${inf.name}\nAge : ${inf.age}\nAttack : ${inf.att}\nDefense : ${inf.def}';
+		t.text = 'Name : ${inf.name}\nAge : ${inf.age}\nPower : ${inf.att}\nLife : ${Math.ceil(n.life)}/${inf.def}';
 		t.scaleX = t.scaleY = 0.5;
 		panel = p;
 	}
@@ -312,38 +320,31 @@ class Game implements haxe.Public {
 		
 	}
 	
-	function updateGamePlay(dt) {
+	function updateGamePlay(dt:Float ) {
+		var ds = hero.speed * dt;
 		if( Key.isDown(K.LEFT) || Key.isDown("A".code) || Key.isDown("Q".code) )
-			hero.move( -1, 0);
+			hero.moveBy( -ds, 0);
 		if( Key.isDown(K.RIGHT) || Key.isDown("D".code) )
-			hero.move( 1, 0);
+			hero.moveBy( ds, 0);
 		if( Key.isDown(K.DOWN) || Key.isDown("S".code) )
-			hero.move( 0, 1);
+			hero.moveBy( 0, ds);
 		if( Key.isDown(K.UP) || Key.isDown("Z".code) || Key.isDown("W".code) )
-			hero.move( 0, -1);
+			hero.moveBy( 0, -ds);
 		scrollContent.ysort(Const.PLAN_ENTITY);
 		for( e in entities.copy() )
 			e.update(dt);
 			
 		if( Key.isToggled(K.SPACE) || Key.isToggled(K.ENTER) ) {
-			var px = hero.x + hero.dirX * 0.5;
-			var py = hero.y + hero.dirY * 0.5;
-			for( e in entities ) {
-				var n = flash.Lib.as(e, Npc);
-				if( n != null && n.hitBox(px, py) ) {
-					menu = new SelectMenu([
-						{ t : "Look", c : callback(doLook, n) },
-						{ t : "Steal", c : callback(doSteal, n) },
-						{ t : "Cancel", c : function() {} },
-					]);
-					break;
-				}
-			}
+			if( hero.life <= 0 )
+				showPanel("You can't attack while you're badly hurt, wait to recover or go to the hospital");
+			else
+				hero.attack();
 		}
 	}
 	
 	function update(dt:Float) {
 		
+		Part.updateAll(dt);
 		
 		scroll.x = hero.x;
 		scroll.y = hero.y;

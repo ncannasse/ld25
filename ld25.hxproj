@@ -5,7 +5,7 @@
     <movie outputType="Application" />
     <movie input="" />
     <movie path="ld25.swf" />
-    <movie fps="60" />
+    <movie fps="20" />
     <movie width="760" />
     <movie height="500" />
     <movie version="11" />

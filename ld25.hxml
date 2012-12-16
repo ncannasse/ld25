@@ -1,7 +1,7 @@
 -cp src
 -cp lib
 -swf ld25.swf
--swf-header 760:500:60:000000
+-swf-header 760:500:20:000000
 -swf-lib obj\ld25Resources.swf
 --flash-strict
 -swf-version 11

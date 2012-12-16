@@ -2,9 +2,9 @@ Day 1 : mostly gfx and level edit
 ---------------------------------
 
 10 am : start
-10-12 am : city tiles, first screen
-12-13 am : city load display + hero sprite move + collides ok
-13-13:30 : some sprites
+10:00-12:00 : city tiles, first screen
+12:00-13:00 : city load display + hero sprite move + collides ok
+13:00-13:30 : some sprites
 13:30-14:30 : lunch
 14:30-15:30 : more sprites (10 npcs)
 15:30-17:30 : lights effect
@@ -20,6 +20,13 @@ Day 1 : mostly gfx and level edit
 Day 2 : Gameplay
 ----------------
 
+9:45 am : start
+
+09:45-11:00 : collide bugs + hit + blood
+11:00-12:30 : fight system ok (aggroo, flee, lifebar)
+
+
+
 TODO :
 	attack people, they fight or flee (mini fight system)
 	life bar -> hospital
@@ -27,5 +34,4 @@ TODO :
 	weapons
 	missions
 	attack vehicles
-	
-	
+

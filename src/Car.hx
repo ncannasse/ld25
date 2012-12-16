@@ -9,6 +9,8 @@ class Car extends Entity {
 		boundsW = 40 / 16;
 		boundsH = 8 / 16;
 		play(id);
+		power = 10;
+		life = maxLife = 100 * (id + 1);
 		dirX = Std.random(2) * 2 - 1;
 	}
 	
@@ -22,6 +24,11 @@ class Car extends Entity {
 		return false;
 	}
 	
+	override function onCollide( e : Entity ) {
+		e.hitBy(this);
+		return true;
+	}
+	
 	override function play(id) {
 		this.anim = game.cars[id];
 		this.frame = 0;
@@ -30,7 +37,7 @@ class Car extends Entity {
 	override function update(dt:Float) {
 		if( wait > 0 )
 			wait -= dt * 0.1;
-		else if( !move(dirX, 0) ) {
+		else if( !moveBy(dirX * speed * dt,  0) ) {
 			wait = 1.5;
 			lock++;
 			if( lock >= 5 ) {
