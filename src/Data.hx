@@ -31,7 +31,7 @@ class Data
 	];
 	
 	
-	public static var ACTIONS = ["Punch", "Talk"];
+	public static var ACTIONS = ["Punch", "Talk", "Shot"];
 	
 	public static var ITEMS : Array<ShopItem> = [
 		{ i : Book, price : 30, f : function() game.addAction(1), text : "You can now talk to people !" },

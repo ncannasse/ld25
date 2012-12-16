@@ -275,6 +275,12 @@ class Game implements haxe.Public {
 			}
 		}
 		n.onReallyKill = function() {
+			switch( n.id ) {
+			case 1, 2, 7, 9, 10:
+				Sounds.childKill.play();
+			default:
+				Sounds.manKill.play();
+			}
 			for( q in quests ) {
 				var qinf = Data.NPC[q].quest;
 				if( Lambda.has(qinf.targets,n.id) ) {
@@ -318,6 +324,7 @@ class Game implements haxe.Public {
 	function nextMission( load = false ) {
 		if( !load ) mission++;
 		var text, miss, scan : Npc -> Bool = null;
+		var prefix = "Mission " + (mission + 1) + " : ";
 		switch( mission ) {
 		case 0:
 			text = "Stole $10 from people which can't defend themselves.\nTip : Look at the Minimap to find your target.";
@@ -391,14 +398,19 @@ class Game implements haxe.Public {
 					nextMission(true);
 				} else if( Lambda.has(questsDone, 4) ) nextMission();
 			};
+		case 12:
+			text = "Go and save your game at the save point";
+			miss = function() {
+			};
 		default:
+			prefix = "";
 			var count = questsDone.length;
-			text = "You are now in sandbox mode : play as you wish !\n"+count+"/"+Data.NPC.length+" quests completed";
+			text = "You are now in sandbox mode : play as you wish !\n"+count+"/"+Data.NPC.length+" quests completed, talk to people for more quests";
 			miss = function() {
 				if( questsDone.length != count ) nextMission(true);
 			};
 		}
-		missionText.text = "Mission " + (mission + 1) + " : " + text;
+		missionText.text = prefix + text;
 		missionText.y = (30 - (missionText.textHeight >> 1)) >> 1;
 		missionPanel.colorAdd = new h3d.Vector(0.5, 0.5, 0.5, 0);
 		missionCheck = miss;
@@ -599,16 +611,19 @@ class Game implements haxe.Public {
 
 			if( Key.isToggled(K.DOWN) || Key.isToggled("S".code) ) {
 				menu.index++;
+				Sounds.menu.play();
 				menu.index %= menu.options.length;
 			}
 			
 			if( Key.isToggled(K.UP) || Key.isToggled("Z".code) || Key.isToggled("W".code) ) {
 				menu.index--;
+				Sounds.menu.play();
 				if( menu.index < 0 ) menu.index += menu.options.length;
 			}
 			
 			if( Key.isToggled(K.SPACE) || Key.isToggled(K.ENTER) ) {
 				var old = menu;
+				Sounds.menu.play();
 				menu.remove();
 				menu = null;
 				var o = old.options[old.index];
@@ -629,6 +644,7 @@ class Game implements haxe.Public {
 		} else if( panelMC != null ) {
 			panelTime -= dt / 60;
 			if( (Key.isToggled(K.SPACE) || Key.isToggled(K.ENTER)) && panelTime < 0 ) {
+				Sounds.menu.play();
 				panelMC.remove();
 				panelMC = null;
 			}
@@ -657,7 +673,6 @@ class Game implements haxe.Public {
 				]);
 				if( winTime > 3.5 ) {
 					winPanel = true;
-					save();
 					showPanel("Small Theft Auto\nMade in 48 hours for the Ludum Dare #25 contest\n\nCongratulations for finishing the game!\nPlease tweet me if you like it @ncannasse\nYou can also follow @shirogames : we are making independant games!\n\nPress action key to return to title.");
 				}
 			}
@@ -694,6 +709,7 @@ class Game implements haxe.Public {
 				inShop = true;
 				var price = 20 + healCount * 10;
 				if( price > money ) price = money;
+				if( mission <= 11 ) price = 0;
 				menu = new SelectMenu([
 					{
 						t : "Heal",
@@ -756,6 +772,8 @@ class Game implements haxe.Public {
 	}
 
 	function save() {
+		if( mission == 12 )
+			nextMission();
 		var ent = [], cars = [];
 		for( e in entities )
 			if( Std.is(e, Npc) ) {
@@ -840,6 +858,7 @@ class Game implements haxe.Public {
 				var a = Math.atan2(hero.dirY, hero.dirX) + (Math.random() * 2 - 1) * Math.PI / 16;
 				var e = new Bullet(hero.x + Math.cos(a) * 0.5, hero.y - 0.5 + Math.sin(a) * 0.5, a);
 			}
+			Sounds.fire.play();
 		}
 	}
 	

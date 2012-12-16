@@ -15,7 +15,13 @@ class Car extends Entity {
 		dirX = Std.random(2) * 2 - 1;
 	}
 	
+	override function hitBy(e) {
+		super.hitBy(e);
+		Sounds.carHit.play();
+	}
+	
 	override function kill() {
+		Sounds.carBreak.play();
 		var white = h2d.Tile.fromColor(0xFFFFFFFF).clone();
 		white.scaleToSize(16*3, 16);
 		for( i in 0...5 )
@@ -55,6 +61,7 @@ class Car extends Entity {
 			}
 		} else
 			lock = 0;
+		if( dirX == 0  ) dirX = 1;
 		mc.scaleX = dirX;
 			
 		super.update(dt);

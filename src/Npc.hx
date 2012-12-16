@@ -140,13 +140,23 @@ class Npc extends Entity {
 	
 	override function hitBy(e) {
 		super.hitBy(e);
-
+		
 		target = null;
 		path = null;
 
 		if( !(Std.is(e, Hero) || Std.is(e,Bullet)) )
 			return;
-		
+
+		switch( id ) {
+		case 1, 2:
+			Sounds.girlHit.play();
+		case 7, 9:
+			Sounds.hit2.play();
+		default:
+			Sounds.manHit.play();
+		}
+
+			
 		if( frightenBy(e) )
 			fleeFrom(e, 10);
 		else

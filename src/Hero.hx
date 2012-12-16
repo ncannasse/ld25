@@ -15,13 +15,22 @@ class Hero extends Entity {
 		return true;
 	}
 	
+	override function hitBy(e:Entity ) {
+		super.hitBy(e);
+		Sounds.hit.play();
+	}
+	
 	override function kill() {
 		life = -maxLife;
 	}
 	
+	var step : Float = 0.;
+	var moved : Bool;
+	
 	override function moveBy(x:Float, y:Float) {
 		anim = game.sprites[y > 0 ? 11 : y < 0 ? 12 : 13];
 		if( x < 0 ) mc.scaleX = 1 else if( x > 0 ) mc.scaleX = -1;
+		moved = true;
 		return super.moveBy(x, y);
 	}
 	
@@ -34,6 +43,19 @@ class Hero extends Entity {
 		if( life < 0 )
 			dt *= 0.7;
 		super.update(dt);
+		
+		if( moved ) {
+			step += Timer.tmod * 0.5;
+			if( step > 3 ) {
+				step = -3;
+				Sounds.steps.play();
+			}
+			moved = false;
+		} else {
+			step = 0;
+			frame = 0;
+		}
+		
 	}
 
 	public function getTargets() : Array<Entity> {
@@ -55,6 +77,7 @@ class Hero extends Entity {
 			if( e != this && (e.hitBox(hx + sizeX * 0.5, hy + sizeY * 0.5) || e.hitBox(hx, hy) || e.hitBox(hx + sizeX, hy) || e.hitBox(hx, hy + sizeY) || e.hitBox(hx + sizeX, hy + sizeY)) )
 				targets.push(e);
 		
+				
 		return cast targets;
 	}
 		
