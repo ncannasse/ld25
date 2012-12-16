@@ -38,7 +38,7 @@ class Game implements haxe.Public {
 	var missionPanel : h2d.ScaleGrid;
 	
 	var miniMap : h2d.Bitmap;
-	var inShop : Bool = false;
+	var inShop : Bool = true;
 	
 	var isHurt : Bool;
 	var healCount : Int;
@@ -342,8 +342,10 @@ class Game implements haxe.Public {
 				} else if( Lambda.has(questsDone, 4) ) nextMission();
 			};
 		default:
-			text = "Play as you wish";
+			var count = questsDone.length;
+			text = "You are now in sandbox mode : play as you wish !\n"+count+"/"+Data.NPC.length+" quests completed";
 			miss = function() {
+				if( questsDone.length != count ) nextMission(true);
 			};
 		}
 		missionText.text = "Mission " + (mission + 1) + " : " + text;
@@ -621,6 +623,20 @@ class Game implements haxe.Public {
 							hero.showLife();
 							announce("Life healed !");
 						}
+					},
+					{
+						t : "Exit",
+						c : function() {},
+					}
+				]);
+			}
+		} else if( ix == 21 && iy == 41 ) {
+			if( !inShop ) {
+				inShop = true;
+				menu = new SelectMenu([
+					{
+						t : "Save",
+						c : save,
 					},
 					{
 						t : "Exit",
