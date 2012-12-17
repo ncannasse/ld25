@@ -27,4 +27,6 @@ Day 2 : Gameplay
 12:30-17:30 : save + quest system + play test : first part and tuto done
 17:30-19:00 : more quests, minigun ok
 19:00-21:00 : lasts quests, title + ending done
+22:00-23:30 : sounds + final testing
+23:30-01:00 : music
 

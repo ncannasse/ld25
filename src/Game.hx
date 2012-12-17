@@ -995,6 +995,7 @@ class Game implements haxe.Public {
 	}
 	
 	static function main() {
+		Sounds.music.play(0, 99999).soundTransform = new flash.media.SoundTransform(0.5);
 		var engine = new h3d.Engine();
 		engine.onReady = function() {
 			startGame(engine);

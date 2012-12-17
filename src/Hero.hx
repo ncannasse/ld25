@@ -28,7 +28,7 @@ class Hero extends Entity {
 	var moved : Bool;
 	
 	override function moveBy(x:Float, y:Float) {
-		anim = game.sprites[y > 0 ? 11 : y < 0 ? 12 : 13];
+		anim = game.sprites[(y > 0 ? 11 : y < 0 ? 12 : 13) + (game.curAction == 2 ? 6 : 0)];
 		if( x < 0 ) mc.scaleX = 1 else if( x > 0 ) mc.scaleX = -1;
 		moved = true;
 		return super.moveBy(x, y);

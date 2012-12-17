@@ -12,7 +12,7 @@ class Sounds {
 		var pos = Context.currentPos();
 		for( f in sys.FileSystem.readDirectory("sfx") ) {
 			switch( f.substr(f.length - 3, 3) ) {
-			case "wav":
+			case "wav", "mp3" :
 				var name = f.substr(0, -4);
 				/*
 				var mp3 = name + ".mp3";
