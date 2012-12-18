@@ -677,7 +677,7 @@ class Game implements haxe.Public {
 				}
 			}
 		}
-			
+/*
 		if( Key.isDown(K.ESCAPE) && Key.isDown(K.CONTROL) ) {
 			saveObj.data.save = null;
 			saveObj.flush();
@@ -692,7 +692,7 @@ class Game implements haxe.Public {
 	
 		if( Key.isToggled("M".code) )
 			getMoney(money == 0 ? 10 : money);
-			
+*/
 		var ix = Std.int(hero.x), iy = Std.int(hero.y);
 		if( ix == 20 && iy == 22 )
 			initShop(Data.WEAPONS);
