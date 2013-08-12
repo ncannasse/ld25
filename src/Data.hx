@@ -6,7 +6,7 @@ class Data
 {
 
 	static var game(get, null) : Game;
-	static function get_game() return Game.inst
+	static function get_game() return Game.inst;
 	
 	public static var WEAPONS : Array<ShopItem> = [
 		{ i : BaseBat, price : 10, f : function() game.hero.power = 2 },

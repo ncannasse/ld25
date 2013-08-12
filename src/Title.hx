@@ -14,7 +14,7 @@ class Title  {
 		tf.y = game.scene.height - 15;
 		tf.dropShadow = { dx : 1, dy  : 1, color : 0, alpha : 0.8 };
 		var i = new h2d.Interactive(game.scene.width, game.scene.height, bmp);
-		i.useMouseHand = false;
+		i.cursor = Default;
 		i.onRelease = function(_) {
 			bmp.remove();
 			Game.title = null;

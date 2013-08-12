@@ -1,6 +1,7 @@
 import Common;
 
-class Game implements haxe.Public {
+@:publicFields
+class Game {
 	
 	var engine : h3d.Engine;
 	var scene : h2d.Scene;
@@ -161,7 +162,7 @@ class Game implements haxe.Public {
 			mission = save.mission;
 			for( a in save.actions )
 				addAction(a);
-			var npcs = new IntHash(), cars = new IntHash();
+			var npcs = new Map(), cars = new Map();
 			for( e in entities ) {
 				var n = flash.Lib.as(e, Npc);
 				if( n == null ) {

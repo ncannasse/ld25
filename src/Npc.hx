@@ -38,7 +38,7 @@ class Npc extends Entity {
 		anim = id == 11 ? game.sprites[16] : game.sprites[id];
 	}
 
-	static inline function K(x,y) return x | (y << 7)
+	static inline function K(x, y) return x | (y << 7);
 	
 	
 	override function onCollide(e:Entity) {

@@ -177,7 +177,7 @@ class Entity {
 			cursor = new h2d.Bitmap(WHITE, game.miniMap);
 			cursor.alpha = 0.5;
 		}
-		cursor.color = h3d.Color.ofInt(color, (color >>> 24) / 255).toVector();
+		cursor.color = h3d.Vector.fromColor(color);
 	}
 	
 	public function update(dt:Float) {
