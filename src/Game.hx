@@ -1,4 +1,5 @@
 import Common;
+import hxd.Key in K;
 
 @:publicFields
 class Game {
@@ -64,7 +65,7 @@ class Game {
 		this.engine = e;
 		scene = new h2d.Scene();
 		scene.setFixedSize(380, 250);
-		font = new h2d.Font("PixelFont", 16);
+		font = hxd.Res.FreePixel.build(16);
 	}
 	
 	public function init() {
@@ -73,9 +74,9 @@ class Game {
 		questsDone = [];
 		items = [];
 		
-		var t = new Tiles(0, 0, true);
-		var s = new Sprites(0, 0, true);
-		var c = new CarsBMP(0, 0, true);
+		var t = hxd.Res.tiles.toBitmap();
+		var s = hxd.Res.sprites.toBitmap();
+		var c = hxd.Res.cars.toBitmap();
 		clearTile(t);
 		clearTile(s);
 		clearTile(c);
@@ -83,7 +84,7 @@ class Game {
 		actions = [];
 		
 		
-		var ui = new UIBMP(0, 0, true);
+		var ui = hxd.Res.ui.toBitmap();
 		clearTile(ui, 0xFFFF00FF);
 		uiTile = h2d.Tile.fromBitmap(ui);
 		tiles = h2d.Tile.fromBitmap(t);
@@ -128,11 +129,12 @@ class Game {
 		initMap();
 		scroll = { x : 15, y : 27 };
 		
-		var bmp = new flash.display.BitmapData(mapWidth, mapHeight, true, 0xFF808090);
+		var bmp = new hxd.BitmapData(mapWidth, mapHeight);
+		bmp.clear(0xFF808090);
 		for( x in 0...mapWidth )
 			for( y in 0...mapHeight ) {
-				if( road[x][y] ) bmp.setPixel32(x, y, 0xFF404048);
-				if( collide[x][y] ) bmp.setPixel32(x, y, 0xFFA0A0B0);
+				if( road[x][y] ) bmp.setPixel(x, y, 0xFF404048);
+				if( collide[x][y] ) bmp.setPixel(x, y, 0xFFA0A0B0);
 			}
 		miniMap = new h2d.Bitmap(h2d.Tile.fromBitmap(bmp), scene);
 		miniMap.x = scene.width - mapWidth - 5;
@@ -278,9 +280,9 @@ class Game {
 		n.onReallyKill = function() {
 			switch( n.id ) {
 			case 1, 2, 7, 9, 10:
-				Sounds.childKill.play();
+				hxd.Res.sfx.childKill.play();
 			default:
-				Sounds.manKill.play();
+				hxd.Res.sfx.manKill.play();
 			}
 			for( q in quests ) {
 				var qinf = Data.NPC[q].quest;
@@ -418,13 +420,12 @@ class Game {
 		missionScan = scan;
 	}
 	
-	function clearTile(t:flash.display.BitmapData, bg:UInt= 0) {
-		if( bg == 0 ) bg = t.getPixel32(t.width - 1, t.height - 1);
-		t.lock();
+	function clearTile(t:hxd.BitmapData, bg = 0) {
+		if( bg == 0 ) bg = t.getPixel(t.width - 1, t.height - 1);
 		for( x in 0...t.width )
 			for( y in 0...t.height )
-				if( t.getPixel32(x, y) == bg )
-					t.setPixel32(x, y, 0);
+				if( t.getPixel(x, y) == bg )
+					t.setPixel(x, y, 0);
 	}
 	
 	function initMap() {
@@ -493,7 +494,7 @@ class Game {
 					}
 				continue;
 			case "lights":
-				var l = h2d.Tile.fromBitmap(new LightBMP(0, 0, true)).sub(0, 0, 256, 256, -4, -5);
+				var l = h2d.Tile.fromBitmap(hxd.Res.radial.toBitmap()).sub(0, 0, 256, 256, -4, -5);
 				plan = Const.PLAN_LIGHT;
 				l.scaleToSize(32, 32);
 				t.tile = l;
@@ -544,19 +545,19 @@ class Game {
 	
 	function updateGamePlay(dt:Float ) {
 		var ds = hero.speed * dt;
-		if( Key.isDown(K.LEFT) || Key.isDown("A".code) || Key.isDown("Q".code) )
+		if( K.isDown(K.LEFT) || K.isDown("A".code) || K.isDown("Q".code) )
 			hero.moveBy( -ds, 0);
-		if( Key.isDown(K.RIGHT) || Key.isDown("D".code) )
+		if( K.isDown(K.RIGHT) || K.isDown("D".code) )
 			hero.moveBy( ds, 0);
-		if( Key.isDown(K.DOWN) || Key.isDown("S".code) )
+		if( K.isDown(K.DOWN) || K.isDown("S".code) )
 			hero.moveBy( 0, ds);
-		if( Key.isDown(K.UP) || Key.isDown("Z".code) || Key.isDown("W".code) )
+		if( K.isDown(K.UP) || K.isDown("Z".code) || K.isDown("W".code) )
 			hero.moveBy( 0, -ds);
 		scrollContent.ysort(Const.PLAN_ENTITY);
 		for( e in entities.copy() )
 			e.update(dt);
 			
-		if( Key.isToggled(K.SPACE) || Key.isToggled(K.ENTER) )
+		if( K.isPressed(K.SPACE) || K.isPressed(K.ENTER) )
 			actions[curAction].f();
 	}
 	
@@ -601,7 +602,7 @@ class Game {
 		scrollContent.y = -iy;
 		
 		for( i in 0...9 )
-			if( (Key.isToggled(K.NUMBER_1 + i) || Key.isToggled(K.NUMPAD_1 + i)) && actions[i] != null && i != curAction ) {
+			if( (K.isPressed(K.NUMBER_0 + i + 1) || K.isPressed(K.NUMPAD_0 + i + 1)) && actions[i] != null && i != curAction ) {
 				setAction(i);
 				announce("Action : " + actions[i].t);
 				break;
@@ -610,21 +611,21 @@ class Game {
 		
 		if( menu != null ) {
 
-			if( Key.isToggled(K.DOWN) || Key.isToggled("S".code) ) {
+			if( K.isPressed(K.DOWN) || K.isPressed("S".code) ) {
 				menu.index++;
-				Sounds.menu.play();
+				hxd.Res.sfx.menu.play();
 				menu.index %= menu.options.length;
 			}
 			
-			if( Key.isToggled(K.UP) || Key.isToggled("Z".code) || Key.isToggled("W".code) ) {
+			if( K.isPressed(K.UP) || K.isPressed("Z".code) || K.isPressed("W".code) ) {
 				menu.index--;
-				Sounds.menu.play();
+				hxd.Res.sfx.menu.play();
 				if( menu.index < 0 ) menu.index += menu.options.length;
 			}
 			
-			if( Key.isToggled(K.SPACE) || Key.isToggled(K.ENTER) ) {
+			if( K.isPressed(K.SPACE) || K.isPressed(K.ENTER) ) {
 				var old = menu;
-				Sounds.menu.play();
+				hxd.Res.sfx.menu.play();
 				menu.remove();
 				menu = null;
 				var o = old.options[old.index];
@@ -644,8 +645,8 @@ class Game {
 				
 		} else if( panelMC != null ) {
 			panelTime -= dt / 60;
-			if( (Key.isToggled(K.SPACE) || Key.isToggled(K.ENTER)) && panelTime < 0 ) {
-				Sounds.menu.play();
+			if( (K.isPressed(K.SPACE) || K.isPressed(K.ENTER)) && panelTime < 0 ) {
+				hxd.Res.sfx.menu.play();
 				panelMC.remove();
 				panelMC = null;
 			}
@@ -859,7 +860,7 @@ class Game {
 				var a = Math.atan2(hero.dirY, hero.dirX) + (Math.random() * 2 - 1) * Math.PI / 16;
 				var e = new Bullet(hero.x + Math.cos(a) * 0.5, hero.y - 0.5 + Math.sin(a) * 0.5, a);
 			}
-			Sounds.fire.play();
+			hxd.Res.sfx.fire.play();
 		}
 	}
 	
@@ -986,8 +987,8 @@ class Game {
 	public static var title : Title;
 	
 	static function updateLoop() {
-		Timer.update();
-		if( title != null ) title.update(Timer.tmod) else if( inst != null ) inst.update(Timer.tmod);
+		hxd.Timer.update();
+		if( title != null ) title.update(hxd.Timer.tmod) else if( inst != null ) inst.update(hxd.Timer.tmod);
 	}
 
 	static function startGame(engine) {
@@ -996,14 +997,17 @@ class Game {
 	}
 	
 	static function main() {
-		Sounds.music.play(0, 99999).soundTransform = new flash.media.SoundTransform(0.5);
+		hxd.Res.initEmbed();
+		hxd.Res.sfx.music_mp3.loop = true;
+		hxd.Res.sfx.music_mp3.volume = 0.5;
+		hxd.Res.sfx.music_mp3.play();
 		var engine = new h3d.Engine();
 		engine.onReady = function() {
 			startGame(engine);
 		};
 		engine.init();
-		flash.Lib.current.addEventListener(flash.events.Event.ENTER_FRAME, function(_) updateLoop());
-		Key.init();
+		hxd.System.setLoop(updateLoop);
+		hxd.Key.initialize();
 	}
 	
 }

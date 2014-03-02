@@ -6,8 +6,7 @@ class Title  {
 	
 	public function new() {
 		game = Game.inst;
-		var bmp = h2d.Bitmap.create(new Common.TitleBMP(0, 0, true));
-		game.scene.addChild(bmp);
+		var bmp = new h2d.Bitmap(hxd.Res.title.toTile(), game.scene);
 		tf = new h2d.Text(game.font, bmp);
 		tf.text = "Click to start";
 		tf.x = 250;
@@ -25,10 +24,7 @@ class Title  {
 	public function update(dt:Float) {
 		game.engine.render(game.scene);
 		time += dt * 0.1;
-		if( time % 2 < 1 )
-			tf.blendMode = Normal;
-		else
-			tf.blendMode = Hide;
+		tf.visible = time % 2 < 1;
 		game.scene.checkEvents();
 	}
 	

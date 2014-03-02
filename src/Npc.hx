@@ -149,11 +149,11 @@ class Npc extends Entity {
 
 		switch( id ) {
 		case 1, 2:
-			Sounds.girlHit.play();
+			hxd.Res.sfx.girlHit.play();
 		case 7, 9:
-			Sounds.hit2.play();
+			hxd.Res.sfx.hit2.play();
 		default:
-			Sounds.manHit.play();
+			hxd.Res.sfx.manHit.play();
 		}
 
 			
@@ -270,14 +270,14 @@ class Npc extends Entity {
 		if( life > maxLife ) life = maxLife;
 		
 		if( flee != null ) {
-			flee -= Timer.deltaT;
+			flee -= hxd.Timer.deltaT;
 			wait = 0;
 			if( flee < 0 )
 				cancelFlee();
 		}
 		
 		if( aggro != null ) {
-			aggro.time -= Timer.deltaT;
+			aggro.time -= hxd.Timer.deltaT;
 			wait = 0;
 			var t = aggro.target;
 			var dx = t.x - x;
@@ -298,7 +298,7 @@ class Npc extends Entity {
 				}
 			}
 		} else if( wait > 0 )
-			wait -= Timer.deltaT * 2;
+			wait -= hxd.Timer.deltaT * 2;
 		else if( target != null ) {
 			var ds = speed * dt;
 			var tx = target.x + 0.5, ty = target.y + 0.5;

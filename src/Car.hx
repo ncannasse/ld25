@@ -17,11 +17,11 @@ class Car extends Entity {
 	
 	override function hitBy(e) {
 		super.hitBy(e);
-		Sounds.carHit.play();
+		hxd.Res.sfx.carHit.play();
 	}
 	
 	override function kill() {
-		Sounds.carBreak.play();
+		hxd.Res.sfx.carBreak.play();
 		var white = h2d.Tile.fromColor(0xFFFFFFFF).clone();
 		white.scaleToSize(16*3, 16);
 		for( i in 0...5 )

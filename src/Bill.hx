@@ -14,7 +14,7 @@ class Bill extends Entity {
 	override function onCollide(e:Entity) {
 		if( Std.is(e, Hero) ) {
 			game.getMoney(5);
-			Sounds.getMoney.play();
+			hxd.Res.sfx.getMoney.play();
 			remove();
 		}
 		return false;

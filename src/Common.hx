@@ -1,35 +1,4 @@
 
-typedef K = flash.ui.Keyboard;
-
-@:bitmap("gfx/tiles.png")
-class Tiles extends flash.display.BitmapData {
-}
-
-@:bitmap("gfx/sprites.png")
-class Sprites extends flash.display.BitmapData {
-}
-
-@:bitmap("gfx/radial.png")
-class LightBMP extends flash.display.BitmapData {
-}
-
-@:bitmap("gfx/halo.png")
-class HaloBMP extends flash.display.BitmapData {
-}
-
-@:bitmap("gfx/ui.png")
-class UIBMP extends flash.display.BitmapData {
-}
-
-@:bitmap("gfx/cars.png")
-class CarsBMP extends flash.display.BitmapData {
-}
-
-
-@:bitmap("gfx/title.png")
-class TitleBMP extends flash.display.BitmapData {
-}
-
 typedef Layer = {
 	data : Array<Int>,
 	name : String,

@@ -17,7 +17,7 @@ class Hero extends Entity {
 	
 	override function hitBy(e:Entity ) {
 		super.hitBy(e);
-		Sounds.hit.play();
+		hxd.Res.sfx.hit.play();
 	}
 	
 	override function kill() {
@@ -45,10 +45,10 @@ class Hero extends Entity {
 		super.update(dt);
 		
 		if( moved ) {
-			step += Timer.tmod * 0.5;
+			step += hxd.Timer.tmod * 0.5;
 			if( step > 3 ) {
 				step = -3;
-				Sounds.steps.play();
+				hxd.Res.sfx.steps.play();
 			}
 			moved = false;
 		} else {

@@ -16,7 +16,6 @@
   <!-- Other classes to be compiled into your SWF -->
   <classpaths>
     <class path="src" />
-    <class path="lib" />
   </classpaths>
   <!-- Build options -->
   <build>
@@ -24,7 +23,7 @@
     <option flashStrict="True" />
     <option mainClass="Game" />
     <option enabledebug="False" />
-    <option additional="-lib h3d&#xA;-resource gfx/map.json@map" />
+    <option additional="-lib h3d&#xA;-dce full" />
   </build>
   <!-- haxelib libraries -->
   <haxelib>
@@ -36,11 +35,11 @@
   </compileTargets>
   <!-- Assets to embed into the output SWF -->
   <library>
-    <asset path="gfx\FreePixel.ttf" id="PixelFont" />
+    <!-- example: <asset path="..." id="..." update="..." glyphs="..." mode="..." place="..." sharepoint="..." /> -->
   </library>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>
-    <!-- example: <hidden path="..." /> -->
+    <hidden path="obj" />
   </hiddenPaths>
   <!-- Executed before build -->
   <preBuildCommand />
@@ -50,6 +49,7 @@
   <options>
     <option showHiddenPaths="False" />
     <option testMovie="Default" />
+    <option testMovieCommand="" />
   </options>
   <!-- Plugin storage -->
   <storage />
