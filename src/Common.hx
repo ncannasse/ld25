@@ -1,15 +1,4 @@
 
-typedef Layer = {
-	data : Array<Int>,
-	name : String,
-}
-
-typedef Tiled = {
-	width : Int,
-	height : Int,
-	layers : Array<Layer>,
-}
-
 typedef NpcData = {
 	var id : Int;
 	var name : String;

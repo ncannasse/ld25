@@ -429,7 +429,7 @@ class Game {
 	}
 	
 	function initMap() {
-		var map : Tiled = haxe.Json.parse(haxe.Resource.getString("map"));
+		var map = hxd.Res.map.toMap();
 		var layers = [];
 		var tmap = [], smap = [];
 		for( y in 0...tiles.height >> 4 )
@@ -1008,6 +1008,7 @@ class Game {
 		engine.init();
 		hxd.System.setLoop(updateLoop);
 		hxd.Key.initialize();
+		hxd.Timer.wantedFPS = 32;
 	}
 	
 }
