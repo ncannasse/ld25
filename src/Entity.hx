@@ -177,7 +177,10 @@ class Entity {
 			cursor = new h2d.Bitmap(WHITE, game.miniMap);
 			cursor.alpha = 0.5;
 		}
-		cursor.color = h3d.Vector.fromColor(color);
+		#if h3d
+		cursor.color = new h3d.Vector();
+		#end
+		cursor.color.setColor(color);
 	}
 	
 	public function update(dt:Float) {

@@ -11,7 +11,7 @@ class Title  {
 		tf.text = "Click to start";
 		tf.x = 250;
 		tf.y = game.scene.height - 15;
-		tf.dropShadow = { dx : 1, dy  : 1, color : 0, alpha : 0.8 };
+		tf.dropShadow = #if h3d { dx : 1, dy  : 1, color : 0, alpha : 0.8 } #else { x : 1, y  : 1, color : 0, alpha : 0.8 } #end;
 		var i = new h2d.Interactive(game.scene.width, game.scene.height, bmp);
 		i.cursor = Default;
 		i.onRelease = function(_) {

@@ -70,7 +70,7 @@ class Npc extends Entity {
 				return;
 		} while( tx < 0 || tx >= game.mapWidth || ty < 0 || ty >= game.mapHeight || game.collide[tx][ty] || (!walk && game.road[tx][ty]) || (px * px + py * py) > r*r );
 		var t0 = haxe.Timer.stamp();
-		var path = new flash.Vector<Int>((game.mapHeight + 1) << 7);
+		var path = new haxe.ds.Vector<Int>((game.mapHeight + 1) << 7);
 		var k = [ { x:tx, y:ty } ], dist = 1;
 		while( k.length > 0 ) {
 			var tmp = k;
@@ -163,7 +163,7 @@ class Npc extends Entity {
 			aggroTo(e);
 			
 		for( e2 in game.entities ) {
-			var n = flash.Lib.as(e2, Npc);
+			var n = Std.instance(e2, Npc);
 			if( n == null || e2 == this ) continue;
 			var dx = e.x - x;
 			var dy = e.y - y;
@@ -192,7 +192,11 @@ class Npc extends Entity {
 			time : (Math.random() + 1) * 4,
 			attack : -1,
 		};
-		mc.colorAdd = new h3d.Vector(0.1,0,0,0);
+		#if h3d
+		mc.colorAdd = new h3d.Vector(0.1, 0, 0, 0);
+		#else
+		mc.addShader(new h3d.shader.ColorAdd()).color.set(0.1, 0, 0, 0);
+		#end
 		speed *= 3;
 		animSpeed *= 3;
 	}
@@ -202,7 +206,11 @@ class Npc extends Entity {
 		collideEnt = true;
 		speed /= 3;
 		animSpeed /= 3;
+		#if h3d
 		mc.colorAdd = null;
+		#else
+		mc.removeShader(mc.getShader(h3d.shader.ColorAdd));
+		#end
 		aggro = null;
 	}
 	

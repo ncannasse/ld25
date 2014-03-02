@@ -46,7 +46,7 @@ class Game {
 	var isHurt : Bool;
 	var healCount : Int;
 	
-	var saveObj : flash.net.SharedObject;
+	var saveObj : hxd.Save;
 
 	var curAction : Int;
 	var actions : Array<{ id : Int, t : String, f : Void -> Void, mc : h2d.Bitmap }>;
@@ -111,7 +111,10 @@ class Game {
 		
 		scrollBitmap = new h2d.CachedBitmap(scene, scene.width, scene.height);
 		scrollContent = new h2d.Layers(scrollBitmap);
-		scrollBitmap.color = new h3d.Vector(0.8, 0.8, 1.2);
+		#if h3d
+		scrollBitmap.color = new h3d.Vector();
+		#end
+		scrollBitmap.color.set(0.8, 0.8, 1.2);
 		
 		var mpanel = newPanel();
 		mpanel.width = scene.width + 6;
@@ -147,10 +150,9 @@ class Game {
 		moneyUI.x = 5;
 		moneyUI.y = 5;
 		moneyUI.textColor = 0xFFEFE161;
-		moneyUI.dropShadow = { dx : 1, dy : 2, color : 0, alpha : 0.5 };
+		moneyUI.dropShadow = #if h3d { dx : 1, dy : 2, color : 0, alpha : 0.5 } #else { x : 1, y : 2, color : 0, alpha : 0.5 } #end;
 		
-		saveObj = flash.net.SharedObject.getLocal("save3");
-		var save = saveObj.data.save;
+		var save = hxd.Save.load();
 		if( save != null ) {
 			var save : SaveData = haxe.Unserializer.run(save);
 			money = save.money;
@@ -166,9 +168,9 @@ class Game {
 				addAction(a);
 			var npcs = new Map(), cars = new Map();
 			for( e in entities ) {
-				var n = flash.Lib.as(e, Npc);
+				var n = Std.instance(e, Npc);
 				if( n == null ) {
-					var n = flash.Lib.as(e, Car);
+					var n = Std.instance(e, Car);
 					if( n != null ) cars.set(n.id, n);
 					continue;
 				}
@@ -222,7 +224,7 @@ class Game {
 		var mc = new h2d.Bitmap(tiles.sub(id * 16, 208, 16, 16), scene);
 		mc.x = 5 + actions.length * 20;
 		mc.y = scene.height - 40;
-		if( actions.length > 0 ) mc.color = disableColor;
+		if( actions.length > 0 ) #if h3d mc.color = disableColor #else mc.color.set(0.5,0.5,0.5,1) #end;
 		var f = [
 			doPunch,
 			doTalk,
@@ -291,7 +293,7 @@ class Game {
 						var has = false;
 						for( t in qinf.targets )
 							for( e in entities ) {
-								var n = flash.Lib.as(e, Npc);
+								var n = Std.instance(e, Npc);
 								if( n != null && n.id == t )
 									has = true;
 							}
@@ -415,7 +417,11 @@ class Game {
 		}
 		missionText.text = prefix + text;
 		missionText.y = (30 - (missionText.textHeight >> 1)) >> 1;
+		#if h3d
 		missionPanel.colorAdd = new h3d.Vector(0.5, 0.5, 0.5, 0);
+		#else
+		missionPanel.addShader(new h3d.shader.ColorAdd()).color.set(0.5, 0.5, 0.5, 0);
+		#end
 		missionCheck = miss;
 		missionScan = scan;
 	}
@@ -565,7 +571,14 @@ class Game {
 	function setAction(i) {
 		curAction = i;
 		for( i in 0...actions.length )
+			#if h3d
 			actions[i].mc.color = i == curAction ? null : disableColor;
+			#else
+			{
+				var v = i == curAction ? 1 : 0.5;
+				actions[i].mc.color.set(v, v, v, 1);
+			}
+			#end
 	}
 	
 	function update(dt:Float) {
@@ -579,6 +592,7 @@ class Game {
 			}
 		}
 		
+		#if h3d
 		if( missionPanel.colorAdd != null ) {
 			missionPanel.colorAdd.x -= dt * 0.1;
 			missionPanel.colorAdd.y -= dt * 0.1;
@@ -586,6 +600,16 @@ class Game {
 			if( missionPanel.colorAdd.x < 0 )
 				missionPanel.colorAdd = null;
 		}
+		#else
+		var s = missionPanel.getShader(h3d.shader.ColorAdd);
+		if( s != null ) {
+			s.color.r -= dt * 0.1;
+			s.color.g -= dt * 0.1;
+			s.color.b -= dt * 0.1;
+			if( s.color.r < 0 )
+				missionPanel.removeShader(s);
+		}
+		#end
 		
 		Part.updateAll(dt);
 		
@@ -666,6 +690,7 @@ class Game {
 				var b = winTime * 0.2;
 				var c = 1.2  - winTime * 0.2;
 				var r = winTime * 0.5;
+				#if h3d
 				scrollBitmap.color = null;
 				scrollBitmap.colorMatrix = h3d.Matrix.L([
 					a + r, b, b, 0,
@@ -673,6 +698,17 @@ class Game {
 					b + r, b, c, 0,
 					0, 0, 0, 1,
 				]);
+				#else
+				scrollBitmap.color.set(1, 1, 1);
+				var s = scrollBitmap.getShader(h3d.shader.ColorMatrix);
+				if( s == null ) s = scrollBitmap.addShader(new h3d.shader.ColorMatrix());
+				s.matrix.load([
+					a + r, b, b, 0,
+					b + r, a, b, 0,
+					b + r, b, c, 0,
+					0, 0, 0, 1,
+				]);
+				#end
 				if( winTime > 3.5 ) {
 					winPanel = true;
 					showPanel("Small Theft Auto\nMade in 48 hours for the Ludum Dare #25 contest\n\nCongratulations for finishing the game!\nPlease tweet me if you like it @ncannasse\nYou can also follow @shirogames : we are making independant games!\n\nPress action key to return to title.");
@@ -739,8 +775,7 @@ class Game {
 					{
 						t : "Erase Save",
 						c : function() {
-							saveObj.data.save = null;
-							saveObj.flush();
+							hxd.Save.save(null);
 							showPanel("Save Clear.\nReload game to restart from scratch, or save again to cancel.");
 						},
 					},
@@ -801,8 +836,7 @@ class Game {
 			questsDone : questsDone,
 		};
 		var s = haxe.Serializer.run(save);
-		saveObj.data.save = s;
-		saveObj.flush();
+		hxd.Save.save(s);
 		announce("Saved");
 	}
 	
@@ -882,7 +916,7 @@ class Game {
 	}
 	
 	function doTalk() {
-		var n = flash.Lib.as(hero.getTargets()[0], Npc);
+		var n = Std.instance(hero.getTargets()[0], Npc);
 		if( n == null )
 			return;
 				
