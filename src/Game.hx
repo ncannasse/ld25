@@ -31,7 +31,7 @@ class Game {
 	var panelMC : h2d.Sprite;
 	var panelTime : Float;
 	
-	var money : Int;
+	var money : Int = 0;
 	var moneyUI : h2d.Text;
 	
 	var mission : Int;
@@ -44,7 +44,7 @@ class Game {
 	var inShop : Bool = true;
 	
 	var isHurt : Bool;
-	var healCount : Int;
+	var healCount : Int = 0;
 	
 	var saveObj : hxd.Save;
 
@@ -427,11 +427,13 @@ class Game {
 	}
 	
 	function clearTile(t:hxd.BitmapData, bg = 0) {
+		t.lock();
 		if( bg == 0 ) bg = t.getPixel(t.width - 1, t.height - 1);
 		for( x in 0...t.width )
 			for( y in 0...t.height )
 				if( t.getPixel(x, y) == bg )
 					t.setPixel(x, y, 0);
+		t.unlock();
 	}
 	
 	function initMap() {
