@@ -4,13 +4,13 @@ typedef Options = Array < { t:String, ?price : Int, c:Void->Void }>;
 class SelectMenu extends h2d.ScaleGrid {
 
 	var cursor : h2d.Bitmap;
-	
+
 	public var options : Options;
 	public var index : Int;
-	
+
 	public function new(options) {
 		var game = Game.inst;
-		super(game.uiTile, 4, 4, game.scene);
+		super(game.uiTile, 4, 4, game.s2d);
 		this.x = 10;
 		this.y = 10;
 		this.options = options;
@@ -46,10 +46,10 @@ class SelectMenu extends h2d.ScaleGrid {
 		index = 0;
 		update(0);
 	}
-	
+
 	public function update(dt:Float) {
 		cursor.x = 0;
 		cursor.y = 10 + index * 12;
 	}
-	
+
 }

@@ -13,7 +13,7 @@ class Part {
 	public var time : Float;
 	public var speed : Float;
 	public var gravity : Float;
-	
+
 	public function new(x, y, z, mc, startTime = 50.) {
 		this.mc = mc;
 		this.x = x;
@@ -30,7 +30,7 @@ class Part {
 		time = startTime;
 		all.push(this);
 	}
-	
+
 	public function update(dt:Float) {
 		x += vx * speed;
 		y += vy * speed;
@@ -46,11 +46,11 @@ class Part {
 		mc.alpha = time / (startTime * 0.5);
 		return time > 0;
 	}
-	
+
 	public function remove() {
 		mc.remove();
 	}
-	
+
 	public static function explode( t : h2d.Tile, px : Int, py : Int, angle : Float, proba = 100 ) {
 		if( t == null )
 			return;
@@ -88,20 +88,21 @@ class Part {
 		}
 		return b;
 	}
-	
+
 	static var all = new Array<Part>();
 	static var batches = new Array<h2d.SpriteBatch>();
 
 	public static function updateAll( dt ) {
 		for( p in all.copy() )
 			if( !p.update(dt) ) {
+				var b = p.mc.batch;
 				p.remove();
 				all.remove(p);
-				if( p.mc.batch.isEmpty() ) {
-					p.mc.batch.remove();
-					batches.remove(p.mc.batch);
+				if( b.isEmpty() ) {
+					b.remove();
+					batches.remove(b);
 				}
 			}
 	}
-	
+
 }

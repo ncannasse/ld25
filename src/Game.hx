@@ -2,10 +2,8 @@ import Common;
 import hxd.Key in K;
 
 @:publicFields
-class Game {
-	
-	var engine : h3d.Engine;
-	var scene : h2d.Scene;
+class Game extends hxd.App {
+
 	var tiles : h2d.Tile;
 	var uiTile : h2d.Tile;
 	var cursor : h2d.Tile;
@@ -16,36 +14,36 @@ class Game {
 	var scrollBitmap : h2d.CachedBitmap;
 	var scrollContent : h2d.Layers;
 	var font : h2d.Font;
-	
+
 	var hero : Hero;
 	var entities : Array<Entity>;
 	var collide : Array<Array<Bool>>;
 	var road : Array<Array<Bool>>;
 	var roadOrPass : Array<Array<Bool>>;
-	
+
 	var mapWidth : Int;
 	var mapHeight : Int;
 	var showBounds : Bool;
-	
+
 	var menu : SelectMenu;
 	var panelMC : h2d.Sprite;
 	var panelTime : Float;
-	
+
 	var money : Int = 0;
 	var moneyUI : h2d.Text;
-	
+
 	var mission : Int;
 	var missionText : h2d.Text;
 	var missionCheck : Void -> Void;
 	var missionScan : Npc -> Bool;
 	var missionPanel : h2d.ScaleGrid;
-	
+
 	var miniMap : h2d.Bitmap;
 	var inShop : Bool = true;
-	
+
 	var isHurt : Bool;
 	var healCount : Int = 0;
-	
+
 	var saveObj : hxd.Save;
 
 	var curAction : Int;
@@ -54,43 +52,43 @@ class Game {
 	var quests : Array<Int>;
 	var questsDone : Array<Int>;
 	var items : Array<Item>;
-	
+
 	var saveString : String;
-	
+
 	var win : Bool;
 	var winPanel : Bool;
 	var winTime : Float = 0;
-			
-	function new(e) {
-		this.engine = e;
-		scene = new h2d.Scene();
-		scene.setFixedSize(380, 250);
+
+	override function init() {
+		s2d.setFixedSize(380, 250);
 		font = hxd.Res.FreePixel.build(16);
+		title = new Title();
 	}
-	
-	public function init() {
+
+	public function initGame() {
+
 		entities = [];
 		quests = [];
 		questsDone = [];
 		items = [];
-		
+
 		var t = hxd.Res.tiles.toBitmap();
 		var s = hxd.Res.sprites.toBitmap();
 		var c = hxd.Res.cars.toBitmap();
 		clearTile(t);
 		clearTile(s);
 		clearTile(c);
-		
+
 		actions = [];
-		
-		
+
+
 		var ui = hxd.Res.ui.toBitmap();
 		clearTile(ui, 0xFFFF00FF);
 		uiTile = h2d.Tile.fromBitmap(ui);
 		tiles = h2d.Tile.fromBitmap(t);
 		cursor = tiles.sub(32, 144, 16, 16);
 		sprites = h2d.Tile.autoCut(s, 16).tiles;
-		
+
 		cars = h2d.Tile.autoCut(c, 16 * 3, 16 * 2).tiles;
 		for( sx in sprites )
 			for( i in 0...sx.length ) {
@@ -99,7 +97,7 @@ class Game {
 				s.scaleToSize(s.width * 2, s.height * 2);
 				sx[i] = s;
 			}
-			
+
 		for( sx in cars )
 			for( i in 0...sx.length ) {
 				var s = sx[i];
@@ -107,31 +105,31 @@ class Game {
 				s.scaleToSize(s.width * 2, s.height * 2);
 				sx[i] = s;
 			}
-			
-		
-		scrollBitmap = new h2d.CachedBitmap(scene, scene.width, scene.height);
+
+
+		scrollBitmap = new h2d.CachedBitmap(s2d, s2d.width, s2d.height);
 		scrollContent = new h2d.Layers(scrollBitmap);
 		#if h3d
 		scrollBitmap.color = new h3d.Vector();
 		#end
 		scrollBitmap.color.set(0.8, 0.8, 1.2);
-		
+
 		var mpanel = newPanel();
-		mpanel.width = scene.width + 6;
+		mpanel.width = s2d.width + 6;
 		mpanel.x = -3;
 		mpanel.height = 30;
-		mpanel.y = scene.height - mpanel.height + 3;
+		mpanel.y = s2d.height - mpanel.height + 3;
 		mpanel.alpha = 0.95;
 		missionPanel = mpanel;
-		
+
 		missionText = new h2d.Text(font, mpanel);
 		missionText.x = 10;
-		missionText.maxWidth = (scene.width - 20) * 2;
+		missionText.maxWidth = (s2d.width - 20) * 2;
 		missionText.scaleX = missionText.scaleY = 0.5;
-	
+
 		initMap();
 		scroll = { x : 15, y : 27 };
-		
+
 		var bmp = new hxd.BitmapData(mapWidth, mapHeight);
 		bmp.clear(0xFF808090);
 		for( x in 0...mapWidth )
@@ -139,19 +137,19 @@ class Game {
 				if( road[x][y] ) bmp.setPixel(x, y, 0xFF404048);
 				if( collide[x][y] ) bmp.setPixel(x, y, 0xFFA0A0B0);
 			}
-		miniMap = new h2d.Bitmap(h2d.Tile.fromBitmap(bmp), scene);
-		miniMap.x = scene.width - mapWidth - 5;
+		miniMap = new h2d.Bitmap(h2d.Tile.fromBitmap(bmp), s2d);
+		miniMap.x = s2d.width - mapWidth - 5;
 		miniMap.y = 5;
 		miniMap.blendMode = Add;
 		miniMap.alpha = 0.5;
 		initEnt();
-		
-		moneyUI = new h2d.Text(font, scene);
+
+		moneyUI = new h2d.Text(font, s2d);
 		moneyUI.x = 5;
 		moneyUI.y = 5;
 		moneyUI.textColor = 0xFFEFE161;
-		moneyUI.dropShadow = #if h3d { dx : 1, dy : 2, color : 0, alpha : 0.5 } #else { x : 1, y : 2, color : 0, alpha : 0.5 } #end;
-		
+		moneyUI.dropShadow = { dx : 1, dy : 2, color : 0, alpha : 0.5 };
+
 		var save = hxd.Save.load();
 		if( save != null ) {
 			var save : SaveData = haxe.Unserializer.run(save);
@@ -208,22 +206,22 @@ class Game {
 			addAction(0);
 			nextMission();
 		}
-				
+
 		moneyUI.text = "$" + money;
 	}
-	
+
 	static var disableColor = new h3d.Vector(0.5, 0.5, 0.5, 1);
-	
+
 	function setPanel(panel) {
 		if( panelMC != null ) panelMC.remove();
 		panelMC = panel;
 		panelTime = 0.;
 	}
-	
+
 	function addAction(id) {
-		var mc = new h2d.Bitmap(tiles.sub(id * 16, 208, 16, 16), scene);
+		var mc = new h2d.Bitmap(tiles.sub(id * 16, 208, 16, 16), s2d);
 		mc.x = 5 + actions.length * 20;
-		mc.y = scene.height - 40;
+		mc.y = s2d.height - 40;
 		if( actions.length > 0 ) #if h3d mc.color = disableColor #else mc.color.set(0.5,0.5,0.5,1) #end;
 		var f = [
 			doPunch,
@@ -232,14 +230,14 @@ class Game {
 		][id];
 		actions.push( { id:id, t:Data.ACTIONS[id], f:f, mc :mc } );
 	}
-	
+
 	function initEnt() {
 		hero = new Hero(scroll.x, scroll.y);
 		hero.life = hero.maxLife = 100;
-		
+
 		for( i in 0...11 )
 			addNpc(i);
-		
+
 		var cpos = [[10, 26], [33, 31], [12, 55], [32, 14]];
 		for( i in 0...cpos.length ) {
 			var c = new Car(i, cpos[i][0], cpos[i][1]);
@@ -250,14 +248,14 @@ class Game {
 			}
 		}
 	}
-	
+
 	function addNpc(id:Int) {
 		var x, y;
 		do {
 			x = Std.random(mapWidth);
 			y = Std.random(mapHeight);
 		} while( collide[x][y] || road[x][y] );
-		
+
 		var inf = Data.NPC[id];
 		var n = new Npc(id, x + 0.5, y + 0.5, inf.money);
 		n.life = n.maxLife = inf.def;
@@ -308,24 +306,24 @@ class Game {
 		}
 		return n;
 	}
-	
+
 	function getMoney(m) {
 		money += m;
 		moneyUI.text = "$" + money;
 		if( m > 0 ) announce("You got $" + m);
 	}
-	
+
 	var announceText : h2d.Text;
 	function announce(text) {
 		if( announceText != null )
 			announceText.remove();
-		announceText = new h2d.Text(font,scene);
+		announceText = new h2d.Text(font,s2d);
 		announceText.x = 5;
 		announceText.y = 25;
 		announceText.scaleX = announceText.scaleY = 0.5;
 		announceText.text = text;
 	}
-	
+
 	function nextMission( load = false ) {
 		if( !load ) mission++;
 		var text, miss, scan : Npc -> Bool = null;
@@ -425,7 +423,7 @@ class Game {
 		missionCheck = miss;
 		missionScan = scan;
 	}
-	
+
 	function clearTile(t:hxd.BitmapData, bg = 0) {
 		t.lock();
 		if( bg == 0 ) bg = t.getPixel(t.width - 1, t.height - 1);
@@ -435,7 +433,7 @@ class Game {
 					t.setPixel(x, y, 0);
 		t.unlock();
 	}
-	
+
 	function initMap() {
 		var map = hxd.Res.map.toMap();
 		var layers = [];
@@ -526,22 +524,22 @@ class Game {
 			scrollContent.add(t, plan);
 		}
 	}
-	
-	
+
+
 	function newPanel( ?parent : h2d.Sprite ) {
-		if( parent == null ) parent = scene;
+		if( parent == null ) parent = s2d;
 		var p = new h2d.ScaleGrid(uiTile, 4, 4, parent);
 		p.x = 10;
 		p.y = 10;
 		return p;
 	}
-	
+
 	function showPanel( text : String, ?delay ) {
 		var p = newPanel();
-		p.width = scene.width - 20;
+		p.width = s2d.width - 20;
 		var t = new h2d.Text(font, p);
 		t.text = text;
-		t.maxWidth = (scene.width - 40) * 2;
+		t.maxWidth = (s2d.width - 40) * 2;
 		t.scaleX = t.scaleY = 0.5;
 		t.x = (p.width - (t.textWidth >> 1)) >> 1;
 		t.y = 5;
@@ -549,8 +547,8 @@ class Game {
 		setPanel(p);
 		if( delay ) panelTime = 1.;
 	}
-	
-	
+
+
 	function updateGamePlay(dt:Float ) {
 		var ds = hero.speed * dt;
 		if( K.isDown(K.LEFT) || K.isDown("A".code) || K.isDown("Q".code) )
@@ -564,12 +562,12 @@ class Game {
 		scrollContent.ysort(Const.PLAN_ENTITY);
 		for( e in entities.copy() )
 			e.update(dt);
-			
+
 		if( K.isPressed(K.SPACE) || K.isPressed(K.ENTER) )
 			actions[curAction].f();
 	}
-	
-	
+
+
 	function setAction(i) {
 		curAction = i;
 		for( i in 0...actions.length )
@@ -582,9 +580,14 @@ class Game {
 			}
 			#end
 	}
-	
-	function update(dt:Float) {
-		
+
+	override function update(dt:Float) {
+
+		if( title != null ) {
+			title.update(dt);
+			return;
+		}
+
 		if( announceText != null ) {
 			announceText.alpha -= dt * 0.05;
 			announceText.y -= dt * 0.5;
@@ -593,7 +596,7 @@ class Game {
 				announceText = null;
 			}
 		}
-		
+
 		#if h3d
 		if( missionPanel.colorAdd != null ) {
 			missionPanel.colorAdd.x -= dt * 0.1;
@@ -612,29 +615,29 @@ class Game {
 				missionPanel.removeShader(s);
 		}
 		#end
-		
+
 		Part.updateAll(dt);
-		
+
 		scroll.x = hero.x;
 		scroll.y = hero.y;
-		
-		var ix = Std.int(scroll.x * 16) - (scene.width >> 1);
-		var iy = Std.int(scroll.y * 16) - (scene.height >> 1);
+
+		var ix = Std.int(scroll.x * 16) - (s2d.width >> 1);
+		var iy = Std.int(scroll.y * 16) - (s2d.height >> 1);
 		if( ix < 0 ) ix = 0;
 		if( iy < 0 ) iy = 0;
-		if( ix + scene.width > mapWidth * 16 ) ix = mapWidth * 16 - scene.width;
-		if( iy + scene.height > mapHeight * 16 + 20 ) iy = mapHeight * 16 - scene.height + 20;
+		if( ix + s2d.width > mapWidth * 16 ) ix = mapWidth * 16 - s2d.width;
+		if( iy + s2d.height > mapHeight * 16 + 20 ) iy = mapHeight * 16 - s2d.height + 20;
 		scrollContent.x = -ix;
 		scrollContent.y = -iy;
-		
+
 		for( i in 0...9 )
 			if( (K.isPressed(K.NUMBER_0 + i + 1) || K.isPressed(K.NUMPAD_0 + i + 1)) && actions[i] != null && i != curAction ) {
 				setAction(i);
 				announce("Action : " + actions[i].t);
 				break;
 			}
-				
-		
+
+
 		if( menu != null ) {
 
 			if( K.isPressed(K.DOWN) || K.isPressed("S".code) ) {
@@ -642,13 +645,13 @@ class Game {
 				hxd.Res.sfx.menu.play();
 				menu.index %= menu.options.length;
 			}
-			
+
 			if( K.isPressed(K.UP) || K.isPressed("Z".code) || K.isPressed("W".code) ) {
 				menu.index--;
 				hxd.Res.sfx.menu.play();
 				if( menu.index < 0 ) menu.index += menu.options.length;
 			}
-			
+
 			if( K.isPressed(K.SPACE) || K.isPressed(K.ENTER) ) {
 				var old = menu;
 				hxd.Res.sfx.menu.play();
@@ -666,9 +669,9 @@ class Game {
 					o.c();
 				return;
 			}
-			
+
 			menu.update(dt);
-				
+
 		} else if( panelMC != null ) {
 			panelTime -= dt / 60;
 			if( (K.isPressed(K.SPACE) || K.isPressed(K.ENTER)) && panelTime < 0 ) {
@@ -678,11 +681,11 @@ class Game {
 			}
 		} else
 			updateGamePlay(dt);
-			
+
 		if( win ) {
 			if( winPanel ) {
 				if( panelMC == null ) {
-					scene.dispose();
+					s2d.dispose();
 					startGame(engine);
 					return;
 				}
@@ -723,13 +726,13 @@ class Game {
 			saveObj.flush();
 			announce("Save Clear");
 		}
-			
+
 		if( Key.isToggled("S".code) && Key.isDown(K.CONTROL) )
 			save();
-			
+
 		if( Key.isToggled("B".code) )
 			showBounds = !showBounds;
-	
+
 		if( Key.isToggled("M".code) )
 			getMoney(money == 0 ? 10 : money);
 */
@@ -789,25 +792,22 @@ class Game {
 			}
 		} else
 			inShop = false;
-	
+
 		if( !isHurt && hero.life < 0 ) {
 			isHurt = true;
 			showPanel("You've been badly hurt, you should go to the hospital to heal yourself", true);
 		}
-			
+
 		missionCheck();
-				
-		
+
+
 		if( questsDone.length >= 10 && !Lambda.has(items, Angel) ) {
 			items.push(Angel);
 			addNpc(11);
 		}
-		
+
 		if( questsDone.length == Data.NPC.length && panelMC == null )
 			win = true;
-		
-		engine.render(scene);
-	
 	}
 
 	function save() {
@@ -841,7 +841,7 @@ class Game {
 		hxd.Save.save(s);
 		announce("Saved");
 	}
-	
+
 	function initShop( shop : Array<Data.ShopItem> ) {
 		if( inShop )
 			return;
@@ -873,9 +873,9 @@ class Game {
 		options.push( { t : "Exit", price : null, c : function() { } });
 		menu = new SelectMenu(options);
 	}
-	
+
 	//----------------- ACTIONS
-	
+
 	function doPunch() {
 		if( hero.life <= 0 ) {
 			if( panelMC == null )
@@ -886,7 +886,7 @@ class Game {
 				e.hitBy(hero);
 		}
 	}
-	
+
 	function doShot() {
 		if( hero.life <= 0 ) {
 			if( panelMC == null )
@@ -899,12 +899,12 @@ class Game {
 			hxd.Res.sfx.fire.play();
 		}
 	}
-	
+
 	function addItem(i) {
 		items.push(i);
 		showPanel("You got item : " + Data.ITEM_NAMES[Type.enumIndex(i)]);
 	}
-	
+
 	function questDone(q,?ann) {
 		quests.remove(q);
 		questsDone.push(q);
@@ -916,13 +916,13 @@ class Game {
 		}
 		if( ann ) announce(text) else showPanel(text,true);
 	}
-	
+
 	function doTalk() {
 		var n = Std.instance(hero.getTargets()[0], Npc);
 		if( n == null )
 			return;
-				
-		setPanel(new h2d.Sprite(scene));
+
+		setPanel(new h2d.Sprite(s2d));
 
 		var p = newPanel(panelMC);
 		p.width = 150;
@@ -936,9 +936,9 @@ class Game {
 		var inf = Data.NPC[n.id];
 		t.text = 'Name : ${inf.name}\nAge : ${inf.age}\nPower : ${inf.att}\nLife : ${Math.ceil(n.life)}/${inf.def}';
 		t.scaleX = t.scaleY = 0.5;
-		
+
 		var cancelNext = false;
-		
+
 		for( q in quests ) {
 			function giveItem(i) {
 				if( Lambda.has(items, i) ) {
@@ -981,10 +981,10 @@ class Game {
 				}
 			}
 		}
-		
+
 		if( cancelNext )
 			return;
-		
+
 		if( !Lambda.has(questsDone,n.id) && inf.quest != null ) {
 			var d = newPanel(panelMC);
 			d.x = 10;
@@ -1005,7 +1005,7 @@ class Game {
 						switch( n.id ) {
 						case 8:
 							addItem(Drug);
-							
+
 						}
 					} },
 					{ t : "Cancel", c : function() {
@@ -1017,34 +1017,19 @@ class Game {
 			}
 		}
 	}
-	
-	
+
+
 	public static var inst : Game;
 	public static var title : Title;
-	
-	static function updateLoop() {
-		hxd.Timer.update();
-		if( title != null ) title.update(hxd.Timer.tmod) else if( inst != null ) inst.update(hxd.Timer.tmod);
-	}
 
 	static function startGame(engine) {
 		inst = new Game(engine);
-		title = new Title();
 	}
-	
+
 	static function main() {
 		hxd.Res.initEmbed();
-		hxd.Res.sfx.music_mp3.loop = true;
-		hxd.Res.sfx.music_mp3.volume = 0.5;
-		hxd.Res.sfx.music_mp3.play();
-		var engine = new h3d.Engine();
-		engine.onReady = function() {
-			startGame(engine);
-		};
-		engine.init();
-		hxd.System.setLoop(updateLoop);
-		hxd.Key.initialize();
-		hxd.Timer.wantedFPS = 32;
+		hxd.Res.sfx.music_mp3.play(true, 0.5);
+		startGame(null);
 	}
-	
+
 }
